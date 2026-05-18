@@ -1,0 +1,17 @@
+annotated-types==0.7.0
+certifi==2026.4.22
+cffi==2.0.0
+charset-normalizer==3.4.7
+cryptography==48.0.0
+idna==3.15
+packaging @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_packaging_1777103621/work
+pycparser==3.0
+pydantic==2.13.4
+pydantic-settings==2.14.1
+pydantic_core==2.46.4
+PyJWT==2.12.1
+python-dotenv==1.2.2
+requests==2.34.2
+typing-inspection==0.4.2
+typing_extensions==4.15.0
+urllib3==2.7.0

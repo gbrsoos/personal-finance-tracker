@@ -1,0 +1,15 @@
+# Secrets - never commit
+secrets/
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Data
+data/
+
+# OS
+.DS_Store
