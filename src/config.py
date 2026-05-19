@@ -8,8 +8,11 @@ class Settings(BaseSettings):
         extra="ignore"
     )
 
-    enable_banking_app_id: str = Field(description="Enable Banking API ID")
-    enable_banking_key_path: str = Field(description="Path to personal secret")
-    redirect_url: str = Field(description="URL of the redirection")
+    enable_banking_app_id: str = Field(..., description="Enable Banking API ID")
+    enable_banking_key_path: str = Field(..., description="Path to personal secret")
+    redirect_url: str = Field(..., description="URL of the redirection")
+    ssl_cert_path: str = Field(..., description="Path to MKCert SSL Cert")
+    ssl_key_path: str = Field(..., description="Path to MKCert SSL Key")
+    session_info_path: str = Field(..., description="Path to the current Session info")
 
 settings = Settings()
