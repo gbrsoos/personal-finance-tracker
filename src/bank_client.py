@@ -7,7 +7,6 @@ import uuid
 from datetime import datetime, timezone, timedelta
 from urllib.parse import urlparse, parse_qs
 import ssl
-from pprint import pprint
 
 import requests
 import jwt as pyjwt
@@ -17,8 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 API_ORIGIN = "https://api.enablebanking.com"
-ASPSP_NAME = "Erste Bank"
-ASPSP_COUNTRY = "HU"
+
 
 # Error class for unhealthy API response
 class SessionCreationError(Exception):
@@ -87,7 +85,7 @@ def request_details(base_headers):
     r = requests.get(f"{API_ORIGIN}/application", headers=base_headers)
     if r.status_code == 200:
         app = r.json()
-        logger.info("Application details captured successfully.", app)
+        logger.info("Application details captured successfully.")
         return app
     else:
         logger.error("Error in capturing application details. Status: %s", r.status_code)
@@ -98,20 +96,20 @@ def request_aspsps(base_headers):
     # Requesting available ASPSPs
     r = requests.get(f"{API_ORIGIN}/aspsps", headers=base_headers)
     if r.status_code == 200:
-        logger.info("List of ASPSPs captured successfully", r.json()["aspsps"])
+        logger.info("List of ASPSPs captured successfully.")
         return r.json()["aspsps"]
     else:
         logger.error("Error while capturing ASPSP list. Status: %s", r.status_code)
         return
 
 
-def authorization(base_headers):
+def authorization(base_headers, name: str, country: str):
     # Starting authorization
     body = {
         "access": {
             "valid_until": (datetime.now(timezone.utc) + timedelta(days=180)).isoformat()
         },
-        "aspsp": {"name": ASPSP_NAME, "country": ASPSP_COUNTRY},
+        "aspsp": {"name": name, "country": country},
         "state": str(uuid.uuid4()),
         "redirect_url": settings.redirect_url,
         "psu_type": "personal",
@@ -148,21 +146,32 @@ def ensure(result, step: str):
     return result
 
 
-def save_session(session):
+def save_session(session, name: str):
+    sessions: dict = {}
+
     try:
-        with open(settings.session_info_path, "w") as f:
-            json.dump(session, f)
+        with open(settings.sessions_info_path, "r") as f:
+            sessions = json.load(f)
+    except FileNotFoundError:
+        pass
+
+    sessions[name] = session
+
+    try:
+        with open(settings.sessions_info_path, "w") as f:
+            json.dump(sessions, f)
         logger.info("Session saved successfully.")
     except OSError as e:
         logger.error("Failed to save session: %s", e)
         raise
 
 
-def load_session():
+def load_session(name):
     try:
-        with open(settings.session_info_path, "r") as f:
-            session_info = json.load(f)
+        with open(settings.sessions_info_path, "r") as f:
+            sessions_info = json.load(f)
 
+        session_info = sessions_info[name]
         valid_until = session_info['access']['valid_until']
 
         if datetime.now(timezone.utc) < datetime.fromisoformat(valid_until):
@@ -170,15 +179,15 @@ def load_session():
             return session_info
         else:
             raise SessionLoadError("Session load failed")
-    
-    except FileNotFoundError:
-        raise SessionMissingError("session.json is missing")
+        
+    except (FileNotFoundError, KeyError, json.JSONDecodeError):
+        raise SessionMissingError("session.json is missing, empty, or bank not found")
 
 
-def initialize_session():
+def initialize_session(name: str, country: str):
 
     try:
-        session_info = load_session()
+        session_info = load_session(name)
         if session_info:
             return session_info
 
@@ -189,7 +198,7 @@ def initialize_session():
             ensure(headers, "Private key")
             ensure(request_details(headers), "Request details")
             ensure(request_aspsps(headers), "ASPSPs request")
-            ensure(authorization(headers), "Authorization")
+            ensure(authorization(headers, name, country), "Authorization")
 
             session = ensure(
                 create_session(headers),
@@ -198,7 +207,7 @@ def initialize_session():
 
             logger.info("Session initialized successfully")
 
-            save_session(session)
+            save_session(session, name)
 
             return session
         
@@ -212,9 +221,10 @@ def initialize_session():
 
 
 def main():
-    session = initialize_session()
-    if session is None:
-        return 1
+    for bank in settings.BANKS:
+        session = initialize_session(name=bank["name"], country=bank["country"])
+        if session is None:
+            return 1
     
     return 0
 

@@ -13,6 +13,10 @@ class Settings(BaseSettings):
     redirect_url: str = Field(..., description="URL of the redirection")
     ssl_cert_path: str = Field(..., description="Path to MKCert SSL Cert")
     ssl_key_path: str = Field(..., description="Path to MKCert SSL Key")
-    session_info_path: str = Field(..., description="Path to the current Session info")
+    sessions_info_path: str = Field(..., description="Path to the current Session info")
+    BANKS: list[dict] = [
+        {"name": "Erste Bank", "country": "HU"}, 
+        {"name": "Revolut", "country": "HU"},
+        ]
 
 settings = Settings()
