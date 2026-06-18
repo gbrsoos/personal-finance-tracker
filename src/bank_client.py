@@ -107,7 +107,9 @@ def authorization(base_headers, name: str, country: str):
     # Starting authorization
     body = {
         "access": {
-            "valid_until": (datetime.now(timezone.utc) + timedelta(days=180)).isoformat()
+            "valid_until": (datetime.now(timezone.utc) + timedelta(days=180)).isoformat(),
+            "balances": True,
+            "transactions": True,
         },
         "aspsp": {"name": name, "country": country},
         "state": str(uuid.uuid4()),

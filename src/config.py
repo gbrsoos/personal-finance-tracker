@@ -18,5 +18,6 @@ class Settings(BaseSettings):
         {"name": "Erste Bank", "country": "HU"}, 
         {"name": "Revolut", "country": "HU"},
         ]
+    database_url: str = Field(..., description="Route to the SQLAlchemy session")
 
 settings = Settings()
