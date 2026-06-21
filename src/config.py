@@ -1,6 +1,8 @@
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+BANKS: list = ["Erste Bank", "Revolut",]
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -14,10 +16,6 @@ class Settings(BaseSettings):
     ssl_cert_path: str = Field(..., description="Path to MKCert SSL Cert")
     ssl_key_path: str = Field(..., description="Path to MKCert SSL Key")
     sessions_info_path: str = Field(..., description="Path to the current Session info")
-    BANKS: list[dict] = [
-        {"name": "Erste Bank", "country": "HU"}, 
-        {"name": "Revolut", "country": "HU"},
-        ]
     database_url: str = Field(..., description="Route to the SQLAlchemy session")
 
 settings = Settings()

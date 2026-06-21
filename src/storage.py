@@ -1,8 +1,10 @@
+from contextlib import contextmanager
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 from sqlalchemy import Numeric, Date, DateTime, PrimaryKeyConstraint, String, create_engine
 from decimal import Decimal
 from datetime import date, datetime
 from config import settings
+from typing import Optional
 
 class Base(DeclarativeBase):
     pass
@@ -18,21 +20,23 @@ class Transaction(Base):
     currency: Mapped[str] = mapped_column(String)
     credit_debit_indicator: Mapped[str] = mapped_column(String)
     booking_date: Mapped[date] = mapped_column(Date)
-    value_date: Mapped[date] = mapped_column(Date)
+    value_date: Mapped[date] = mapped_column(Date, nullable=True)
     # List in raw data, joined to string before storage e.g. ", ".join(remittance_information)
     remittance_information: Mapped[str] = mapped_column(String, name="transa_details")
     transaction_code: Mapped[str] = mapped_column(String, nullable=True)
     status: Mapped[str] = mapped_column(String, nullable=True)
     category: Mapped[str] = mapped_column(String, nullable=True)
-    ingested_at: Mapped[datetime] = mapped_column(DateTime)
+    ingested_at: Mapped[datetime] = mapped_column(Date)
 
-class Balances(Base):
+class Balance(Base):
     __tablename__ = "balances"
 
-    account_uid: Mapped[str] = mapped_column(String, name="subaccount_id")
     bank_name: Mapped[str] = mapped_column(String)
+    account_uid: Mapped[str] = mapped_column(String, name="subaccount_id")
     amount: Mapped[Decimal] = mapped_column(Numeric(precision=20, scale=6))
     currency: Mapped[str] = mapped_column(String)
+    balance_type: Mapped[str] = mapped_column(String, nullable=True)
+    reference_date: Mapped[Optional[date]] = mapped_column(DateTime, nullable=True)
     retrieved_at: Mapped[datetime] = mapped_column(DateTime)
 
     __table_args__ = (
@@ -45,6 +49,7 @@ Session = sessionmaker(engine)
 def init_db():
     Base.metadata.create_all(engine)
 
+@contextmanager
 def get_session():
     with Session() as session:
         yield session

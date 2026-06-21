@@ -1,4 +1,4 @@
-from config import settings
+from config import settings, BANKS
 
 import logging
 import json
@@ -62,7 +62,7 @@ def jwt_gen():
     iat = int(datetime.now().timestamp())
     jti = str(uuid.uuid4())
     jwt_body = {
-        "iss": settings.enable_banking_app_id,
+        "iss": "settings.enable_banking_app_id",
         "aud": "api.enablebanking.com",
         "iat": iat,
         "exp": iat + 3600,
@@ -161,7 +161,7 @@ def save_session(session, name: str):
 
     try:
         with open(settings.sessions_info_path, "w") as f:
-            json.dump(sessions, f)
+            json.dump(sessions, f, indent=2)
         logger.info("Session saved successfully.")
     except OSError as e:
         logger.error("Failed to save session: %s", e)
@@ -223,8 +223,8 @@ def initialize_session(name: str, country: str):
 
 
 def main():
-    for bank in settings.BANKS:
-        session = initialize_session(name=bank["name"], country=bank["country"])
+    for bank in BANKS:
+        session = initialize_session(name=bank, country="HU")
         if session is None:
             return 1
     
