@@ -223,7 +223,7 @@ def initialize_session(name: str, country: str):
 
 
 def main():
-    for bank in BANKS:
+    for bank in BANKS.keys():
         session = initialize_session(name=bank, country="HU")
         if session is None:
             return 1

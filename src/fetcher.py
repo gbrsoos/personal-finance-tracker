@@ -17,7 +17,7 @@ def uid_retriever() -> dict[str, list]:
     with open(settings.sessions_info_path, "r") as f:
         session_info = json.load(f)
 
-    for bank in BANKS:
+    for bank in BANKS.keys():
         account_uids[bank] = []
 
         for account in range(len(session_info[bank]['accounts'])):

@@ -1,7 +1,10 @@
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-BANKS: list = ["Erste Bank", "Revolut",]
+BANKS: dict = {
+    "Erste Bank": "HU", 
+    "Revolut": "HU"
+    }
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(

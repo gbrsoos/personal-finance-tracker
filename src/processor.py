@@ -59,7 +59,7 @@ def save_transaction(transaction: Transaction):
         logger.error("Failed to save transaction %s: %s", transaction.id, e)
 
 
-def process_transactions(transaction_list: dict, bank_name: str, account_uid: str):
+def process_transactions(transaction_list: list, bank_name: str, account_uid: str):
     num_tr = len(transaction_list)
 
     for i, tr in enumerate(transaction_list):
@@ -104,7 +104,7 @@ def save_balance(balance: Balance):
             logger.error("Failed to save balance for account %s: %s", balance.account_uid, e)
 
 
-def process_balances(balance_list: dict, bank_name: str, account_uid: str):
+def process_balances(balance_list: list, bank_name: str, account_uid: str):
     num_tr = len(balance_list)
 
     for i, bal in enumerate(balance_list):
