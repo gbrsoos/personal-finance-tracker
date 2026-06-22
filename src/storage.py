@@ -29,7 +29,7 @@ class Transaction(Base):
     status: Mapped[str] = mapped_column(String, nullable=True)
     category: Mapped[str] = mapped_column(String, nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    ingested_at: Mapped[datetime] = mapped_column(Date)
+    ingested_at: Mapped[datetime] = mapped_column(DateTime)
 
 
 class Balance(Base):
@@ -47,11 +47,22 @@ class Balance(Base):
         PrimaryKeyConstraint("subaccount_id", "retrieved_at"),
     )
 
+
 class Category(Base):
     __tablename__ = "categories"
 
     category_name: Mapped[str] = mapped_column(String, primary_key=True)
     category_type: Mapped[str] = mapped_column(String, nullable=True)
+
+
+class CategorizationExample(Base):
+    __tablename__ = "categorization_examples"
+
+    remittance_pattern: Mapped[str] = mapped_column(String, primary_key=True)
+    correct_category: Mapped[str] = mapped_column(String)
+    added_by: Mapped[str] = mapped_column(String)
+    created_at: Mapped[datetime] = mapped_column(DateTime)
+
 
 
 def init_db():
@@ -80,7 +91,9 @@ def seed_categories():
     
     with get_session() as session:
         for category in categories:
-            session.add(category)
+            existing = session.get(Category, category.category_name)
+            if not existing:
+                session.add(category)
         session.commit()
 
 engine = create_engine(settings.database_url)
