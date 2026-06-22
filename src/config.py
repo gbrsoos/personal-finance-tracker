@@ -20,5 +20,6 @@ class Settings(BaseSettings):
     ssl_key_path: str = Field(..., description="Path to MKCert SSL Key")
     sessions_info_path: str = Field(..., description="Path to the current Session info")
     database_url: str = Field(..., description="Route to the SQLAlchemy session")
+    anthropic_api_key: str = Field(..., description="Anthropic API Key")
 
 settings = Settings()

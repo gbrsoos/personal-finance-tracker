@@ -2,6 +2,7 @@ from config import BANKS
 from bank_client import initialize_session
 from fetcher import uid_retriever, fetch_transactions, fetch_balances
 from processor import process_transactions, process_balances
+from categorization_agent import run_categorization
 
 
 def main():
@@ -23,6 +24,8 @@ def main():
                 balance_list=all_balances[(bank, account_uids[bank][i])], 
                 bank_name=bank, 
                 account_uid=account_uids[bank][i])
+            
+    run_categorization()
             
 if __name__ == "__main__":
     main()

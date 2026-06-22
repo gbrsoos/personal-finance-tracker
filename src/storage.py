@@ -6,8 +6,10 @@ from datetime import date, datetime
 from config import settings
 from typing import Optional
 
+
 class Base(DeclarativeBase):
     pass
+
 
 class Transaction(Base):
     __tablename__ = "transactions"
@@ -26,7 +28,9 @@ class Transaction(Base):
     transaction_code: Mapped[str] = mapped_column(String, nullable=True)
     status: Mapped[str] = mapped_column(String, nullable=True)
     category: Mapped[str] = mapped_column(String, nullable=True)
+    notes: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     ingested_at: Mapped[datetime] = mapped_column(Date)
+
 
 class Balance(Base):
     __tablename__ = "balances"
@@ -43,16 +47,46 @@ class Balance(Base):
         PrimaryKeyConstraint("subaccount_id", "retrieved_at"),
     )
 
-engine = create_engine(settings.database_url)
-Session = sessionmaker(engine)
+class Category(Base):
+    __tablename__ = "categories"
+
+    category_name: Mapped[str] = mapped_column(String, primary_key=True)
+    category_type: Mapped[str] = mapped_column(String, nullable=True)
+
 
 def init_db():
     Base.metadata.create_all(engine)
+
 
 @contextmanager
 def get_session():
     with Session() as session:
         yield session
 
+
+def seed_categories():
+    categories = [
+        Category(category_name="Groceries", category_type="spending"),
+        Category(category_name="Clothes", category_type="spending"),
+        Category(category_name="Utilities", category_type="spending"),
+        Category(category_name="Subscriptions", category_type="spending"),
+        Category(category_name="Eating out", category_type="spending"),
+        Category(category_name="Irregular", category_type="spending"),
+        Category(category_name="Salary", category_type="income"),
+        Category(category_name="Ingenium", category_type="income"),
+        Category(category_name="Other Income", category_type="income"),
+        Category(category_name="Revolut Spare Change", category_type="savings"),
+    ]
+    
+    with get_session() as session:
+        for category in categories:
+            session.add(category)
+        session.commit()
+
+engine = create_engine(settings.database_url)
+Session = sessionmaker(engine)
+
+
 if __name__ == "__main__":
     init_db()
+    seed_categories()
