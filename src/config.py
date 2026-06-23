@@ -21,5 +21,7 @@ class Settings(BaseSettings):
     sessions_info_path: str = Field(..., description="Path to the current Session info")
     database_url: str = Field(..., description="Route to the SQLAlchemy session")
     anthropic_api_key: str = Field(..., description="Anthropic API Key")
+    openai_api_key: str = Field(..., description="OpenAI API Key")
+
 
 settings = Settings()

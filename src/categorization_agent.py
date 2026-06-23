@@ -1,5 +1,6 @@
 from config import settings
-from storage import get_session, Transaction, Category
+from storage import get_session, Transaction
+from embedder import find_similar_examples
 from itertools import batched
 import anthropic
 import json
@@ -22,14 +23,24 @@ def categorize_batch(transactions: list[Transaction]) -> dict[str, str]:
         system_prompt = f.read()
 
     for batch in batched(transactions, 50):
-        user_message = {}
+        remittance_strings: list = [
+            tr.remittance_information if tr.remittance_information else "unknown" 
+            for tr in batch
+        ]
+
+        relevant_examples: dict[str, list] = find_similar_examples(remittance_strings=remittance_strings)
+
+        user_message = {
+            "examples": relevant_examples,
+            "transactions": {}
+        }
 
         for tr in batch:
             entry = {"remittance_information": tr.remittance_information, 
                      "credit_debit_indicator": tr.credit_debit_indicator,
                      "transaction_code": tr.transaction_code
                      }
-            user_message[tr.id] = entry
+            user_message["transactions"][tr.id] = entry
 
         response = client.messages.create(
             model="claude-sonnet-4-6",

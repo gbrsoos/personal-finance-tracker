@@ -1,10 +1,11 @@
 from contextlib import contextmanager
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
-from sqlalchemy import Numeric, Date, DateTime, PrimaryKeyConstraint, String, create_engine
+from sqlalchemy import Numeric, Date, DateTime, PrimaryKeyConstraint, String, create_engine, LargeBinary, event
 from decimal import Decimal
 from datetime import date, datetime
 from config import settings
 from typing import Optional
+import sqlite_vec
 
 
 class Base(DeclarativeBase):
@@ -62,7 +63,7 @@ class CategorizationExample(Base):
     correct_category: Mapped[str] = mapped_column(String)
     added_by: Mapped[str] = mapped_column(String)
     created_at: Mapped[datetime] = mapped_column(DateTime)
-
+    embedding: Mapped[Optional[bytes]] = mapped_column(LargeBinary, nullable=True)
 
 
 def init_db():
@@ -97,6 +98,13 @@ def seed_categories():
         session.commit()
 
 engine = create_engine(settings.database_url)
+
+@event.listens_for(engine, "connect")
+def on_connect(dbapi_connection, connection_record):
+    dbapi_connection.enable_load_extension(True)
+    sqlite_vec.load(dbapi_connection)
+    dbapi_connection.enable_load_extension(False)
+
 Session = sessionmaker(engine)
 
 
