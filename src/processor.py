@@ -12,6 +12,10 @@ logger = logging.getLogger(__name__)
 
 # Transaction branch
 def prepare_transaction(transaction: dict, bank_name: str, account_uid: str) -> Transaction:
+    """
+    Parse a raw transaction payload from the Enable Banking API and return an
+    unsaved Transaction ORM object ready for insertion.
+    """
     #DB elements to be extracted from the nested payload
     amount = Decimal(transaction["transaction_amount"]["amount"].strip('"'))
     currency = transaction["transaction_amount"]["currency"]
@@ -48,7 +52,8 @@ def prepare_transaction(transaction: dict, bank_name: str, account_uid: str) -> 
     return output
 
 
-def save_transaction(transaction: Transaction):
+def save_transaction(transaction: Transaction) -> None:
+    """Persist a Transaction to the database, silently skipping duplicates."""
     try:
         with get_session() as session:
             session.add(transaction)
@@ -59,7 +64,8 @@ def save_transaction(transaction: Transaction):
         logger.error("Failed to save transaction %s: %s", transaction.id, e)
 
 
-def process_transactions(transaction_list: list, bank_name: str, account_uid: str):
+def process_transactions(transaction_list: list[dict], bank_name: str, account_uid: str) -> None:
+    """Prepare and save every transaction in the list, logging progress per entry."""
     num_tr = len(transaction_list)
 
     for i, tr in enumerate(transaction_list):
@@ -70,6 +76,10 @@ def process_transactions(transaction_list: list, bank_name: str, account_uid: st
 
 # Balance branch
 def prepare_balance(balance: dict, bank_name: str, account_uid: str) -> Balance:
+    """
+    Parse a raw balance payload from the Enable Banking API and return an
+    unsaved Balance ORM object ready for insertion.
+    """
     #DB elements to be extracted from the nested payload
     amount = Decimal(balance["balance_amount"]["amount"].strip('"'))
     currency = balance["balance_amount"]["currency"]
@@ -78,7 +88,7 @@ def prepare_balance(balance: dict, bank_name: str, account_uid: str) -> Balance:
 
     # DB elements to be created
     retrieved_at = datetime.now(timezone.utc)
-    
+
 
     output = Balance(
         bank_name=bank_name,
@@ -93,7 +103,8 @@ def prepare_balance(balance: dict, bank_name: str, account_uid: str) -> Balance:
     return output
 
 
-def save_balance(balance: Balance):
+def save_balance(balance: Balance) -> None:
+    """Persist a Balance snapshot to the database, silently skipping duplicates."""
     try:
         with get_session() as session:
             session.add(balance)
@@ -104,7 +115,8 @@ def save_balance(balance: Balance):
             logger.error("Failed to save balance for account %s: %s", balance.account_uid, e)
 
 
-def process_balances(balance_list: list, bank_name: str, account_uid: str):
+def process_balances(balance_list: list[dict], bank_name: str, account_uid: str) -> None:
+    """Prepare and save every balance snapshot in the list, logging progress per entry."""
     num_tr = len(balance_list)
 
     for i, bal in enumerate(balance_list):

@@ -11,8 +11,12 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def uid_retriever() -> dict[str, list]:
-    account_uids = {}
+def uid_retriever() -> dict[str, list[str]]:
+    """
+    Read the saved sessions file and return a mapping of bank name →
+    list of account UIDs for every configured bank.
+    """
+    account_uids: dict[str, list[str]] = {}
 
     with open(settings.sessions_info_path, "r") as f:
         session_info = json.load(f)
@@ -28,17 +32,29 @@ def uid_retriever() -> dict[str, list]:
 
 
 def get_date_from() -> str:
+    """
+    Return the ISO date string to use as the start of the next transaction
+    fetch. Uses the most recent booking date already in the database, or
+    falls back to 90 days ago if no transactions exist yet.
+    """
     with get_session() as session:
         last_date = session.query(func.max(Transaction.booking_date)).scalar()
-    
+
     if last_date is None:
         return  (datetime.now(timezone.utc) - timedelta(days=90)).date().isoformat()
     else:
         return last_date.isoformat()
 
-def fetch_transactions(account_uids: dict[str, list]) -> dict[tuple, list]:
+def fetch_transactions(account_uids: dict[str, list[str]]) -> dict[tuple[str, str], list[dict]]:
+    """
+    Fetch all transactions for every account from the Enable Banking API,
+    following pagination via continuation keys.
+
+    Returns a dict keyed by (bank_name, account_uid) whose values are lists
+    of raw transaction dicts as returned by the API.
+    """
     base_headers = jwt_gen()
-    all_transactions = {}
+    all_transactions: dict[tuple[str, str], list[dict]] = {}
 
     for bank in account_uids:
         for account_uid in account_uids[bank]:
@@ -79,9 +95,15 @@ def fetch_transactions(account_uids: dict[str, list]) -> dict[tuple, list]:
     return all_transactions
 
 
-def fetch_balances(account_uids: dict[str, list]) -> dict[tuple, list]:
+def fetch_balances(account_uids: dict[str, list[str]]) -> dict[tuple[str, str], list[dict]]:
+    """
+    Fetch the current balances for every account from the Enable Banking API.
+
+    Returns a dict keyed by (bank_name, account_uid) whose values are lists
+    of raw balance dicts as returned by the API.
+    """
     base_headers = jwt_gen()
-    all_balances = {}
+    all_balances: dict[tuple[str, str], list[dict]] = {}
 
     for bank in account_uids:
         for account_uid in account_uids[bank]:

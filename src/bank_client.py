@@ -1,4 +1,5 @@
 from config import settings, BANKS
+from typing import Any
 
 import logging
 import json
@@ -37,7 +38,8 @@ class SessionMissingError(Exception):
 
 # Local listener
 class CallbackHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
+    def do_GET(self) -> None:
+        """Extract the OAuth authorization code from the redirect URL query string."""
         self.server.auth_code = parse_qs(
             urlparse(self.path).query
         )["code"][0]
@@ -46,7 +48,11 @@ class CallbackHandler(BaseHTTPRequestHandler):
         self.wfile.write(b"Authentication successful, you can close this tab.")
 
 
-def capture_auth_code():
+def capture_auth_code() -> str:
+    """
+    Start a local HTTPS server on port 8000, handle a single OAuth redirect
+    request, and return the extracted authorization code.
+    """
     ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     ssl_context.load_cert_chain(settings.ssl_cert_path, settings.ssl_key_path)
 
@@ -58,7 +64,11 @@ def capture_auth_code():
     return server.auth_code
 
 
-def jwt_gen():
+def jwt_gen() -> dict[str, str]:
+    """
+    Generate a signed RS256 JWT for the Enable Banking API and return it
+    as an Authorization Bearer header dict ready to pass to requests calls.
+    """
     iat = int(datetime.now().timestamp())
     jti = str(uuid.uuid4())
     jwt_body = {
@@ -80,8 +90,8 @@ def jwt_gen():
     return base_headers
 
 
-def request_details(base_headers):
-    # Requesting application details
+def request_details(base_headers: dict[str, str]) -> dict | None:
+    """Return the Enable Banking application details, or None on failure."""
     r = requests.get(f"{API_ORIGIN}/application", headers=base_headers)
     if r.status_code == 200:
         app = r.json()
@@ -89,22 +99,25 @@ def request_details(base_headers):
         return app
     else:
         logger.error("Error in capturing application details. Status: %s", r.status_code)
-        return
+        return None
 
 
-def request_aspsps(base_headers):
-    # Requesting available ASPSPs
+def request_aspsps(base_headers: dict[str, str]) -> list | None:
+    """Return the list of available ASPSPs from the API, or None on failure."""
     r = requests.get(f"{API_ORIGIN}/aspsps", headers=base_headers)
     if r.status_code == 200:
         logger.info("List of ASPSPs captured successfully.")
         return r.json()["aspsps"]
     else:
         logger.error("Error while capturing ASPSP list. Status: %s", r.status_code)
-        return
+        return None
 
 
-def authorization(base_headers, name: str, country: str):
-    # Starting authorization
+def authorization(base_headers: dict[str, str], name: str, country: str) -> str | None:
+    """
+    Initiate an OAuth authorization flow for a given bank and return the
+    URL the user must visit to authenticate, or None on failure.
+    """
     body = {
         "access": {
             "valid_until": (datetime.now(timezone.utc) + timedelta(days=180)).isoformat(),
@@ -123,11 +136,15 @@ def authorization(base_headers, name: str, country: str):
         return auth_url
     else:
         logger.error("Failed authorization. Status: %s", r.status_code)
-        return
+        return None
 
 
-def create_session(base_headers):
-    # Reading auth code and creating user session
+def create_session(base_headers: dict[str, str]) -> dict | None:
+    """
+    Exchange the OAuth authorization code captured from the local redirect
+    listener for a new Enable Banking session. Returns the session dict on
+    success, or None on failure.
+    """
     auth_code = capture_auth_code()
     r = requests.post(f"{API_ORIGIN}/sessions", json={"code": auth_code}, headers=base_headers)
     if r.status_code == 200:
@@ -136,19 +153,22 @@ def create_session(base_headers):
         return session
     else:
         logger.error("Error while creating new session. Status: %s", r.status_code)
-        return
-    
+        return None
 
-def ensure(result, step: str):
+
+def ensure(result: Any, step: str) -> Any:
     """
     Validate a step result.
+
+    Raises SessionCreationError if result is None; otherwise returns result unchanged.
     """
     if result is None:
         raise SessionCreationError(f"{step} failed")
     return result
 
 
-def save_session(session, name: str):
+def save_session(session: dict, name: str) -> None:
+    """Persist a session dict to the sessions JSON file under the given bank name."""
     sessions: dict = {}
 
     try:
@@ -168,7 +188,16 @@ def save_session(session, name: str):
         raise
 
 
-def load_session(name):
+def load_session(name: str) -> dict:
+    """
+    Load the saved session for the given bank from disk and verify it has
+    not expired.
+
+    Raises:
+        SessionMissingError: if the sessions file is missing, malformed, or
+                             does not contain an entry for the given bank.
+        SessionLoadError: if the session's valid_until timestamp is in the past.
+    """
     try:
         with open(settings.sessions_info_path, "r") as f:
             sessions_info = json.load(f)
@@ -181,13 +210,18 @@ def load_session(name):
             return session_info
         else:
             raise SessionLoadError("Session load failed")
-        
+
     except (FileNotFoundError, KeyError, json.JSONDecodeError):
         raise SessionMissingError("session.json is missing, empty, or bank not found")
 
 
-def initialize_session(name: str, country: str):
+def initialize_session(name: str, country: str) -> dict | None:
+    """
+    Return a valid session for the given bank, creating one via the full
+    OAuth flow if no unexpired session exists on disk.
 
+    Returns the session dict on success, or None if session creation failed.
+    """
     try:
         session_info = load_session(name)
         if session_info:
@@ -212,22 +246,23 @@ def initialize_session(name: str, country: str):
             save_session(session, name)
 
             return session
-        
+
         except SessionCreationError as e:
             logger.error("Initialization failed: %s", e)
             return None
-        
+
         except Exception:
             logger.exception("Unexpected error during initialization")
             raise
 
 
-def main():
+def main() -> int:
+    """Initialize sessions for all configured banks and return 0 on success, 1 on failure."""
     for bank in BANKS.keys():
         session = initialize_session(name=bank, country="HU")
         if session is None:
             return 1
-    
+
     return 0
 
 

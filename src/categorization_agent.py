@@ -9,6 +9,7 @@ client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
 
 
 def get_uncategorized_transactions() -> list[Transaction]:
+    """Fetch all transactions that have not yet been assigned a category."""
     with get_session() as session:
         transactions = session.query(Transaction).filter(Transaction.category.is_(None)).all()
         session.expunge_all()
@@ -16,15 +17,22 @@ def get_uncategorized_transactions() -> list[Transaction]:
     return transactions
 
 
-def categorize_batch(transactions: list[Transaction]) -> dict[str, str]: 
+def categorize_batch(transactions: list[Transaction]) -> dict[str, str]:
+    """
+    Send transactions to Claude in batches of 50 and return a mapping of
+    transaction ID → assigned category.
+
+    For each batch, retrieves semantically similar categorization examples via
+    vector search and passes them as few-shot context to the LLM.
+    """
     all_results = {}
 
     with open("src/prompts/categorization_system_prompt.txt", "r") as f:
         system_prompt = f.read()
 
     for batch in batched(transactions, 50):
-        remittance_strings: list = [
-            tr.remittance_information if tr.remittance_information else "unknown" 
+        remittance_strings: list[str] = [
+            tr.remittance_information if tr.remittance_information else f"[No description] bank:{tr.bank_name} code:{tr.transaction_code} amount:{float(tr.amount)}"
             for tr in batch
         ]
 
@@ -36,7 +44,7 @@ def categorize_batch(transactions: list[Transaction]) -> dict[str, str]:
         }
 
         for tr in batch:
-            entry = {"remittance_information": tr.remittance_information, 
+            entry = {"remittance_information": tr.remittance_information if tr.remittance_information else f"[No description] bank:{tr.bank_name} code:{tr.transaction_code} amount:{float(tr.amount)}",
                      "credit_debit_indicator": tr.credit_debit_indicator,
                      "transaction_code": tr.transaction_code
                      }
@@ -58,17 +66,24 @@ def categorize_batch(transactions: list[Transaction]) -> dict[str, str]:
     return all_results
 
 
-def update_categories(category_dict: dict[str, str]):
+def update_categories(category_dict: dict[str, str]) -> None:
+    """Persist the LLM-assigned categories to the database."""
     with get_session() as session:
         for id, cat in category_dict.items():
             tr = session.get(Transaction, id)
             if tr:
                 tr.category = cat
-        
+
         session.commit()
 
 
-def run_categorization():
+def run_categorization() -> int:
+    """
+    Run the full categorization pipeline: fetch uncategorized transactions,
+    classify them with the LLM, and persist the results.
+
+    Returns the number of transactions that were processed.
+    """
     uncat_tr = get_uncategorized_transactions()
     categories = categorize_batch(transactions=uncat_tr)
     update_categories(category_dict=categories)

@@ -1,5 +1,13 @@
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+import os
+
+
+model_config = SettingsConfigDict(
+    env_file=os.environ.get("ENV_FILE", ".env"),
+    env_file_encoding="utf-8",
+    extra="ignore"
+)
 
 BANKS: dict = {
     "Erste Bank": "HU", 

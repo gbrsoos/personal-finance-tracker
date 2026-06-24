@@ -5,6 +5,8 @@ from sqlalchemy import func
 from datetime import datetime, date
 from embedder import add_example
 from categorization_agent import run_categorization as trigger_categorization
+import logging
+import sys
 
 
 mcp = FastMCP("personal_finance_tracker")
@@ -60,7 +62,7 @@ def get_balance() -> str:
         
 
 @mcp.tool()
-def get_spending_summary(date_from: str, date_to: str, categories: list[str] = None) -> str:
+def get_spending_summary(date_from: str, date_to: str, categories: list[str] | None = None) -> str:
     """
     Return a spending summary grouped by category and currency for a given date range.
 
@@ -178,7 +180,7 @@ def get_transactions_by_category(category: str, date_from: str, date_to: str) ->
 
 
 @mcp.tool()
-def recategorize_transaction(transaction_id: str, new_category: str):
+def recategorize_transaction(transaction_id: str, new_category: str) -> str:
     """
     Change the category of a single transaction and teach the system to remember the pattern.
 
@@ -227,7 +229,7 @@ def recategorize_transaction(transaction_id: str, new_category: str):
         
 
 @mcp.tool()
-def add_categorization_example(pattern: str, new_category: str):
+def add_categorization_example(pattern: str, new_category: str) -> str:
     """
     Add a remittance pattern as a labelled example to the categorization learning layer.
 
@@ -317,7 +319,7 @@ def get_uncategorized_transactions() -> str:
         return "There are currently no uncategorized transactions"
     
 @mcp.tool()
-def run_categorization():
+def run_categorization() -> str:
     """
     Trigger the LLM categorization agent to automatically categorize all pending transactions.
 

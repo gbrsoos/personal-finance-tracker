@@ -8,26 +8,34 @@ from sqlalchemy import text
 client = OpenAI(api_key=settings.openai_api_key)
 
 
-def embed_text(text: str) -> bytes:
+def embed_text(value: str) -> bytes:
+    """Embed a single string and return it as a serialized float32 byte vector."""
     response = client.embeddings.create(
-        input=text,
+        input=value,
         model="text-embedding-3-small"
     )
 
     return sqlite_vec.serialize_float32(response.data[0].embedding)
 
-    
-def embed_texts(text: list[str]) -> list[bytes]:
+
+def embed_texts(values: list[str]) -> list[bytes]:
+    """Embed a list of strings in a single API call and return serialized float32 byte vectors."""
     response = client.embeddings.create(
-    input=text,
-    model="text-embedding-3-small"
+        input=values,
+        model="text-embedding-3-small"
     )
 
     return [sqlite_vec.serialize_float32(d.embedding) for d in response.data]
 
 
-def add_example(pattern: str, category: str, added_by: str):
-    embedding = embed_text(pattern)  # embed immediately
+def add_example(pattern: str, category: str, added_by: str) -> None:
+    """
+    Upsert a categorization example into the database with its embedding.
+
+    If a record with the same remittance_pattern already exists, its category
+    and embedding are updated in place. Otherwise a new record is inserted.
+    """
+    embedding = embed_text(pattern)
     example = CategorizationExample(
         remittance_pattern=pattern,
         correct_category=category,
@@ -47,10 +55,17 @@ def add_example(pattern: str, category: str, added_by: str):
             session.commit()
 
 
-def find_similar_examples(remittance_strings: list[str], top_k=5) -> dict[str, list]:
+def find_similar_examples(remittance_strings: list[str], top_k: int = 5) -> dict[str, list[dict[str, str]]]:
+    """
+    For each remittance string, retrieve the top-k most similar categorization
+    examples from the database using cosine distance on embeddings.
+
+    Returns a dict mapping each input string to a list of
+    {"pattern": ..., "category": ...} dicts ordered by ascending distance.
+    """
     embeddings = embed_texts(remittance_strings)
 
-    results = {}
+    results: dict[str, list[dict[str, str]]] = {}
 
     with get_session() as session:
         for i, remittance in enumerate(remittance_strings):
