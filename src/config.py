@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     database_url: str = Field(..., description="Route to the SQLAlchemy session")
     anthropic_api_key: str = Field(..., description="Anthropic API Key")
     openai_api_key: str = Field(..., description="OpenAI API Key")
+    currencies: list[str] = Field(["HUF", "EUR", "USD"], description="List of currencies used by the app")
 
 
 settings = Settings()

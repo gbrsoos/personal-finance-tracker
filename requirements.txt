@@ -19,3 +19,4 @@ SQLAlchemy==2.0.51
 sqlite-vec==0.1.9
 typing-inspection==0.4.2
 urllib3==2.7.0
+mcp==1.28.0
