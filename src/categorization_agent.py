@@ -73,5 +73,7 @@ def run_categorization():
     categories = categorize_batch(transactions=uncat_tr)
     update_categories(category_dict=categories)
 
+    return len(uncat_tr)
+
 if __name__ == "__main__":
     run_categorization()

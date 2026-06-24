@@ -8,15 +8,22 @@ from sqlalchemy import text
 client = OpenAI(api_key=settings.openai_api_key)
 
 
-def embed_text(text: str | list[str]) -> bytes | list[bytes]:
+def embed_text(text: str) -> bytes:
     response = client.embeddings.create(
         input=text,
         model="text-embedding-3-small"
     )
-    if isinstance(text, str):
-        return sqlite_vec.serialize_float32(response.data[0].embedding)
-    else:
-        return [sqlite_vec.serialize_float32(d.embedding) for d in response.data]
+
+    return sqlite_vec.serialize_float32(response.data[0].embedding)
+
+    
+def embed_texts(text: list[str]) -> list[bytes]:
+    response = client.embeddings.create(
+    input=text,
+    model="text-embedding-3-small"
+    )
+
+    return [sqlite_vec.serialize_float32(d.embedding) for d in response.data]
 
 
 def add_example(pattern: str, category: str, added_by: str):
@@ -30,12 +37,18 @@ def add_example(pattern: str, category: str, added_by: str):
     )
 
     with get_session() as session:
-        session.add(example)
-        session.commit()
+        existing = session.get(CategorizationExample, pattern)
+        if existing:
+            existing.correct_category = category
+            existing.embedding = embedding
+            session.commit()
+        else:
+            session.add(example)
+            session.commit()
 
 
 def find_similar_examples(remittance_strings: list[str], top_k=5) -> dict[str, list]:
-    embeddings = embed_text(remittance_strings)
+    embeddings = embed_texts(remittance_strings)
 
     results = {}
 
