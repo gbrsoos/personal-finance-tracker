@@ -3,6 +3,10 @@ from bank_client import initialize_session
 from fetcher import uid_retriever, fetch_transactions, fetch_balances
 from processor import process_transactions, process_balances
 from categorization_agent import run_categorization
+import logging
+logging.basicConfig(level=logging.INFO)
+
+logger = logging.getLogger(__name__)
 
 
 def main() -> None:
@@ -22,6 +26,7 @@ def main() -> None:
 
     for bank in BANKS:
         for i in range(len(account_uids[bank])):
+            logger.info("Fetching new account")
             process_transactions(
                 transaction_list=all_transactions[(bank, account_uids[bank][i])],
                 bank_name=bank,

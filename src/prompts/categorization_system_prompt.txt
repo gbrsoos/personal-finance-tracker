@@ -9,6 +9,8 @@ Spending:
 - Subscriptions
 - Eating out
 - Irregular
+- Transport
+- Sports
 
 Income:
 - Salary
@@ -18,11 +20,14 @@ Income:
 Savings:
 - Revolut Spare Change
 
+Transfer:
+- Currency Exchange
+
 ## Rules
 - Use ONLY the category names listed above, exactly as written
 - If a transaction is a CRDT (credit) it is likely income or a refund
 - If a transaction is a DBIT (debit) it is likely spending or savings
-- "Revpoints Spare Change" is always "Revo Savings"
+- "Revpoints Spare Change" is always "Revolut Spare Change"
 - "Ingenium" in the description is always "Ingenium"
 - If you cannot determine the category with confidence, use "Irregular"
 

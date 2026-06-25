@@ -1,12 +1,10 @@
 from config import settings
 from mcp.server.fastmcp import FastMCP
-from storage import get_session, Balance, Transaction
-from sqlalchemy import func
-from datetime import datetime, date
+from storage import get_session, Transaction
+from datetime import datetime
 from embedder import add_example
 from categorization_agent import run_categorization as trigger_categorization
-import logging
-import sys
+from queries import query_balances, query_income, query_spending, query_transactions_by_category, query_uncategorized_transactions
 
 
 mcp = FastMCP("personal_finance_tracker")
@@ -33,28 +31,18 @@ def get_balance() -> str:
     account_outputs: list[str] = []
     total_outputs: list[str] = []
 
-    with get_session() as session:
-        balances = session.query(
-            Balance.bank_name, 
-            Balance.currency, 
-            Balance.amount, 
-            func.max(Balance.retrieved_at)
-            ).filter(
-                Balance.balance_type == "ITAV"
-            ).group_by(Balance.account_uid, Balance.currency)
+    balances = query_balances()
 
-        session.expunge_all()
+    for balance in balances:
+        balances_output[(balance[0], balance[1])] = (float(balance[2]), balance[3].strftime("%Y-%m-%d %H:%M"))
 
-        for balance in balances:
-            balances_output[(balance.bank_name, balance.currency)] = (float(balance.amount), balance[3].strftime("%Y-%m-%d %H:%M"))
+    for key, value in balances_output.items():
+        account_outputs.append(f"Account: {key[0]} - {key[1]}: {value[0]}, retrieved at {value[1]}")
 
-        for key, value in balances_output.items():
-            account_outputs.append(f"Account: {key[0]} - {key[1]}: {value[0]}, retrieved at {value[1]}")
-
-        for currency in settings.currencies:
-            total_value = sum(v[0] for k, v in balances_output.items() if k[1] == currency)
-            if total_value > 0:
-                total_outputs.append(f"Total amount - {currency}: {total_value}")
+    for currency in settings.currencies:
+        total_value = sum(v[0] for k, v in balances_output.items() if k[1] == currency)
+        if total_value > 0:
+            total_outputs.append(f"Total amount - {currency}: {total_value}")
 
     final_output: str = "\n".join(account_outputs) + "\n" + "\n".join(total_outputs)
 
@@ -76,9 +64,10 @@ def get_spending_summary(date_from: str, date_to: str, categories: list[str] | N
         categories: Optional list of category names to filter by. When omitted or None,
                     all categories are returned. Valid category names are:
                     Spending  — "Groceries", "Clothes", "Utilities", "Subscriptions",
-                                "Eating out", "Irregular"
+                                "Eating out", "Irregular", "Transport", "Sports"
                     Income    — "Salary", "Ingenium", "Other Income"
                     Savings   — "Revolut Spare Change"
+                    Transfer  - "Currency Exchange"
 
     Returns a plain-text report:
         "Starting date: <date_from>\\nEnding date: <date_to>\\n"
@@ -89,30 +78,13 @@ def get_spending_summary(date_from: str, date_to: str, categories: list[str] | N
     breakdown by category, or wants to compare spending across time ranges.
     """
     category_outputs: list[str] = []
-    date_from_parsed: date = date.fromisoformat(date_from)
-    date_to_parsed: date = date.fromisoformat(date_to)
 
-    with get_session() as session:
-        all_categories_summary = session.query(
-            Transaction.category,
-            Transaction.currency,
-            func.sum(Transaction.amount)
-        ).filter(Transaction.credit_debit_indicator == "DBIT"
-        ).filter(Transaction.booking_date >= date_from_parsed
-        ).filter(Transaction.booking_date <= date_to_parsed
-        ).group_by(Transaction.category, Transaction.currency)
-
-        if categories:
-            spending_summary = all_categories_summary.filter(Transaction.category.in_(categories)).all()
-        else:
-            spending_summary = all_categories_summary.all()
-
-        session.expunge_all()
+    spending_summary = query_spending(date_from=date_from, date_to=date_to, categories=categories)
 
     category_outputs.append(f"Starting date: {date_from}\nEnding date: {date_to}\n")
 
     for category in spending_summary:
-        category_outputs.append(f"Category: {category.category} ({category.currency}) - Spending: {float(category[2])}")
+        category_outputs.append(f"Category: {category[0]} ({category[1]}) - Spending: {float(category[2])}")
 
     final_output: str = "\n".join(category_outputs)
 
@@ -130,9 +102,10 @@ def get_transactions_by_category(category: str, date_from: str, date_to: str) ->
     Args:
         category:  Exact category name to filter by. Valid values:
                    Spending  — "Groceries", "Clothes", "Utilities", "Subscriptions",
-                               "Eating out", "Irregular"
+                               "Eating out", "Irregular", "Transport", "Sports"
                    Income    — "Salary", "Ingenium", "Other Income"
                    Savings   — "Revolut Spare Change"
+                   Transfer  - "Currency Exchange"
         date_from: Start of the period, inclusive. ISO 8601 date string: "YYYY-MM-DD".
         date_to:   End of the period, inclusive. ISO 8601 date string: "YYYY-MM-DD".
 
@@ -148,33 +121,20 @@ def get_transactions_by_category(category: str, date_from: str, date_to: str) ->
     category total, investigate a specific expense, or review all entries in a group.
     """
     category_output: list[str] = []
-    date_from_parsed: date = date.fromisoformat(date_from)
-    date_to_parsed: date = date.fromisoformat(date_to)
 
-    with get_session() as session:
-        category_transactions = session.query(
-            Transaction.id,
-            Transaction.currency,
-            Transaction.amount,
-            Transaction.remittance_information,
-            Transaction.booking_date
-        ).filter(Transaction.booking_date >= date_from_parsed
-        ).filter(Transaction.booking_date <= date_to_parsed
-        ).filter(Transaction.category == category).all()
+    category_transactions = query_transactions_by_category(category=category, date_from=date_from, date_to=date_to)
 
-        session.expunge_all()
+    category_output.append(
+        f"Transactions in category {category} between {date_from} and {date_to}:\n"
+        )
 
+
+    for tr in category_transactions:
         category_output.append(
-            f"Transactions in category {category} between {date_from} and {date_to}:\n"
+            f"ID: {tr[0]} | Date: {tr[4].strftime('%Y-%m-%d')} - {tr[3]} - {tr[1]} {tr[2]}"
             )
 
-
-        for tr in category_transactions:
-            category_output.append(
-                f"ID: {tr.id} | Date: {tr.booking_date.strftime('%Y-%m-%d')} - {tr.remittance_information} - {tr.currency} {tr.amount}"
-                )
-
-        final_output: str = "\n".join(category_output)
+    final_output: str = "\n".join(category_output)
 
     return final_output
 
@@ -198,9 +158,10 @@ def recategorize_transaction(transaction_id: str, new_category: str) -> str:
                         before calling this tool, since the change is immediately committed.
         new_category:   The correct category to assign. Must be one of:
                         Spending  — "Groceries", "Clothes", "Utilities", "Subscriptions",
-                                    "Eating out", "Irregular"
+                                    "Eating out", "Irregular", "Transport", "Sports"
                         Income    — "Salary", "Ingenium", "Other Income"
                         Savings   — "Revolut Spare Change"
+                        Transfer  - "Currency Exchange"
 
     Returns a confirmation string on success:
         "Transaction <first_8_chars>... has been recategorized from <old> to <new>"
@@ -249,9 +210,10 @@ def add_categorization_example(pattern: str, new_category: str) -> str:
                       "Employer payroll transfer". Can be a partial pattern.
         new_category: The category this pattern should map to. Must be one of:
                       Spending  — "Groceries", "Clothes", "Utilities", "Subscriptions",
-                                  "Eating out", "Irregular"
+                                  "Eating out", "Irregular", "Transport", "Sports"
                       Income    — "Salary", "Ingenium", "Other Income"
                       Savings   — "Revolut Spare Change"
+                      Transfer  - "Currency Exchange"
 
     Returns:
         "Pattern '<pattern>' added as an example for category '<new_category>'."
@@ -297,19 +259,12 @@ def get_uncategorized_transactions() -> str:
     """
     uncat_trs_collect: list[str] = []
 
-    with get_session() as session:
-        uncat_trs = session.query(
-            Transaction.id,
-            Transaction.booking_date,
-            Transaction.remittance_information,
-            Transaction.currency,
-            Transaction.amount
-        ).filter(Transaction.category.is_(None)).all()
+    uncat_trs = query_uncategorized_transactions()
 
     uncat_trs_collect.append(f"Uncategorized transactions:\n")
 
     for tr in uncat_trs:
-        uncat_trs_collect.append(f"ID: {tr.id} | Date: {tr.booking_date.strftime('%Y-%m-%d')} | Pattern: {tr.remittance_information} - {tr.currency} {float(tr.amount)}")
+        uncat_trs_collect.append(f"ID: {tr[0]} | Date: {tr[1].strftime('%Y-%m-%d')} | Pattern: {tr[2]} - {tr[3]} {float(tr[4])}")
 
     final_output: str = "\n".join(uncat_trs_collect)
 

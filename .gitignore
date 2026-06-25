@@ -13,3 +13,6 @@ data/
 
 # OS
 .DS_Store
+
+# Test
+src/test.ipynb

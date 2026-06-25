@@ -88,6 +88,9 @@ def seed_categories():
         Category(category_name="Ingenium", category_type="income"),
         Category(category_name="Other Income", category_type="income"),
         Category(category_name="Revolut Spare Change", category_type="savings"),
+        Category(category_name="Currency Exchange", category_type="transfer"),
+        Category(category_name="Transport", category_type="spending"),
+        Category(category_name="Sports", category_type="spending"),
     ]
     
     with get_session() as session:
