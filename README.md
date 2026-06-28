@@ -139,7 +139,17 @@ mkdir -p data
 python src/storage.py
 ```
 
-### 9. Authenticate with your banks
+### 9. Mark the database as up to date with Alembic
+
+This tells Alembic that the database is already at the latest schema version (since `storage.py` just created it fresh):
+
+```bash
+alembic stamp head
+```
+
+> **Note:** Only run this on a fresh database. If you're upgrading an existing installation, use `alembic upgrade head` instead — it will apply any new migrations without touching your data.
+
+### 10. Authenticate with your banks
 
 This opens a browser for each bank to complete PSD2 authentication (one-time setup per bank, valid for 180 days):
 
@@ -147,7 +157,7 @@ This opens a browser for each bank to complete PSD2 authentication (one-time set
 python src/bank_client.py
 ```
 
-### 10. Run the first sync
+### 11. Run the first sync
 
 ```bash
 python src/scheduler.py
@@ -218,6 +228,17 @@ Add:
 
 ---
 
+## Updating an existing installation
+
+When a new version introduces schema changes, apply them without losing data:
+
+```bash
+git pull
+alembic upgrade head
+```
+
+---
+
 ## Project structure
 
 ```
@@ -237,10 +258,15 @@ personal-finance-tracker/
 │   ├── dashboard.html            # Dashboard frontend
 │   └── prompts/
 │       └── categorization_system_prompt.txt
+├── migrations/                   # Alembic database migrations
+│   ├── env.py
+│   ├── script.py.mako
+│   └── versions/
 ├── secrets/                      # Git-ignored — credentials only
 ├── data/                         # Git-ignored — SQLite database
 ├── .env                          # Git-ignored — your credentials
 ├── .env.example                  # Template for credentials
+├── alembic.ini                   # Alembic configuration
 ├── requirements.txt
 └── README.md
 ```
