@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Finance</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0d;
+      --surface: #1a1a1a;
+      --surface-2: #242424;
+      --border: rgba(255,255,255,0.08);
+      --border-strong: rgba(255,255,255,0.14);
+      --text-primary: #ffffff;
+      --text-secondary: #888888;
+      --text-muted: #555555;
+      --accent: #7B61FF;
+      --accent-light: rgba(123,97,255,0.15);
+      --income: #00D4AA;
+      --income-light: rgba(0,212,170,0.12);
+      --danger: #FF4D4D;
+      --danger-light: rgba(255,77,77,0.12);
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+      min-height: 100vh;
+      padding: 0 0 80px;
+    }
+
+    .header {
+      padding: 32px 24px 0;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .header h1 {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .header-title {
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    .date-filter {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      padding: 6px 6px 6px 14px;
+    }
+
+    .date-filter input[type="date"] {
+      background: none;
+      border: none;
+      color: var(--text-primary);
+      font-size: 13px;
+      outline: none;
+      cursor: pointer;
+      color-scheme: dark;
+    }
+
+    .date-filter span {
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .date-filter button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      padding: 6px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .date-filter button:hover { opacity: 0.85; }
+
+    .main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px 24px 0;
+    }
+
+    .balances {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .balance-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+
+    .balance-card .label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .balance-card .amount {
+      font-size: 26px;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .balance-card .currency-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: var(--accent-light);
+      color: var(--accent);
+      letter-spacing: 0.04em;
+    }
+
+    .balance-card .updated {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 640px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .chart-wrap {
+      position: relative;
+      height: 260px;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .transactions {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .transactions-header {
+      padding: 20px 24px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .transactions-header .card-title { margin-bottom: 0; }
+
+    .category-tabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      font-size: 12px;
+      padding: 4px 12px;
+      border-radius: 50px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .tab.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .tab:hover:not(.active) {
+      border-color: var(--border-strong);
+      color: var(--text-primary);
+    }
+
+    .tr-list { }
+
+    .tr-row {
+      display: flex;
+      align-items: center;
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+      transition: background 0.1s;
+    }
+
+    .tr-row:last-child { border-bottom: none; }
+    .tr-row:hover { background: rgba(255,255,255,0.02); }
+
+    .tr-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: var(--surface-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .tr-info { flex: 1; min-width: 0; }
+
+    .tr-name {
+      font-size: 14px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tr-date {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .tr-amount {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      text-align: right;
+    }
+
+    .tr-amount.debit { color: var(--text-primary); }
+    .tr-amount.credit { color: var(--income); }
+
+    .empty {
+      padding: 48px 24px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .loading {
+      padding: 48px 24px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 14px 24px;
+      border-top: 1px solid var(--border-strong);
+      font-size: 13px;
+    }
+
+    .total-row .label { color: var(--text-secondary); }
+    .total-row .value { font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Personal Finance</h1>
+  <div class="header-row">
+    <div class="header-title" id="period-title">June 2026</div>
+    <div class="date-filter">
+      <input type="date" id="date-from" />
+      <span>—</span>
+      <input type="date" id="date-to" />
+      <button onclick="loadAll()">Apply</button>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="balances" id="balances-grid">
+    <div class="loading">Loading balances…</div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Spending</div>
+      <div class="chart-wrap">
+        <canvas id="spending-chart" role="img" aria-label="Spending by category donut chart"></canvas>
+      </div>
+      <div class="legend" id="spending-legend"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Income</div>
+      <div class="chart-wrap">
+        <canvas id="income-chart" role="img" aria-label="Income by category donut chart"></canvas>
+      </div>
+      <div class="legend" id="income-legend"></div>
+    </div>
+  </div>
+
+  <div class="transactions">
+    <div class="transactions-header">
+      <div class="card-title">Transactions</div>
+      <div class="category-tabs" id="category-tabs"></div>
+    </div>
+    <div class="tr-list" id="tr-list">
+      <div class="loading">Loading transactions…</div>
+    </div>
+    <div class="total-row" id="tr-total" style="display:none">
+      <span class="label">Total</span>
+      <span class="value" id="tr-total-val"></span>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const API = '';
+const COLORS = ['#7B61FF','#00D4AA','#FF9F43','#FF4D4D','#54A0FF','#5F27CD','#00D2D3','#FF9FF3','#FFC312'];
+const CATEGORY_ICONS = {
+  'Groceries': '🛒', 'Eating out': '🍽️', 'Subscriptions': '📱',
+  'Utilities': '💡', 'Clothes': '👔', 'Transport': '🚌',
+  'Sports': '🏃', 'Irregular': '📦', 'Currency Exchange': '💱',
+  'Salary': '💼', 'Ingenium': '💻', 'Other Income': '💰',
+  'Revolut Spare Change': '🪙', 'default': '💳'
+};
+
+let spendingChart, incomeChart;
+let allTransactions = [];
+let activeCategory = null;
+
+function getIcon(cat) { return CATEGORY_ICONS[cat] || CATEGORY_ICONS['default']; }
+
+function fmtAmount(amount, currency) {
+  return new Intl.NumberFormat('hu-HU', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount) + ' ' + currency;
+}
+
+function initDates() {
+  const now = new Date();
+  const from = new Date(now.getFullYear(), now.getMonth(), 1);
+  const to = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  document.getElementById('date-from').value = from.toISOString().split('T')[0];
+  document.getElementById('date-to').value = to.toISOString().split('T')[0];
+  document.getElementById('period-title').textContent =
+    from.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+}
+
+async function loadBalances() {
+  try {
+    const res = await fetch(`${API}/api/balances`);
+    const data = await res.json();
+    const grid = document.getElementById('balances-grid');
+    if (!data.length) { grid.innerHTML = '<div class="empty">No balance data</div>'; return; }
+
+    const grouped = {};
+    data.forEach(b => {
+      const key = b.currency;
+      if (!grouped[key]) grouped[key] = 0;
+      grouped[key] += b.amount;
+    });
+
+    grid.innerHTML = data.map(b => `
+      <div class="balance-card">
+        <div class="label">${b.bank_name}</div>
+        <div class="amount">${fmtAmount(b.amount, '')}</div>
+        <span class="currency-badge">${b.currency}</span>
+        <div class="updated">Updated ${b.retrieved_at}</div>
+      </div>
+    `).join('') + Object.entries(grouped).map(([cur, total]) => `
+      <div class="balance-card" style="border-color: var(--accent-light); background: linear-gradient(135deg, var(--surface) 0%, rgba(123,97,255,0.08) 100%);">
+        <div class="label">Total ${cur}</div>
+        <div class="amount" style="color: var(--accent)">${fmtAmount(total, '')}</div>
+        <span class="currency-badge">${cur}</span>
+      </div>
+    `).join('');
+  } catch(e) { document.getElementById('balances-grid').innerHTML = '<div class="empty">Could not load balances</div>'; }
+}
+
+function buildDonut(canvasId, legendId, data, colors) {
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext('2d');
+  if (window[canvasId + '_chart']) window[canvasId + '_chart'].destroy();
+
+  if (!data.length) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#555';
+    ctx.font = '14px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText('No data', canvas.width / 2, canvas.height / 2);
+    document.getElementById(legendId).innerHTML = '';
+    return;
+  }
+
+  const labels = data.map(d => d.category);
+  const values = data.map(d => d.amount);
+  const total = values.reduce((a, b) => a + b, 0);
+
+  window[canvasId + '_chart'] = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: colors.slice(0, data.length),
+        borderWidth: 2,
+        borderColor: '#1a1a1a',
+        hoverBorderColor: '#1a1a1a',
+        hoverOffset: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '72%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${fmtAmount(ctx.parsed, data[ctx.dataIndex].currency)} (${Math.round(ctx.parsed / total * 100)}%)`
+          }
+        }
+      }
+    }
+  });
+
+  document.getElementById(legendId).innerHTML = data.map((d, i) => `
+    <div class="legend-item">
+      <div class="legend-dot" style="background:${colors[i]}"></div>
+      <span>${d.category} · ${Math.round(d.amount / total * 100)}%</span>
+    </div>
+  `).join('');
+}
+
+async function loadSpending() {
+  const from = document.getElementById('date-from').value;
+  const to = document.getElementById('date-to').value;
+  try {
+    const res = await fetch(`${API}/api/spending?date_from=${from}&date_to=${to}`);
+    const data = await res.json();
+    const grouped = {};
+    data.forEach(d => {
+      if (!grouped[d.category]) grouped[d.category] = { category: d.category, currency: d.currency, amount: 0 };
+      grouped[d.category].amount += d.amount;
+    });
+    buildDonut('spending-chart', 'spending-legend', Object.values(grouped), COLORS);
+    return Object.keys(grouped);
+  } catch(e) { return []; }
+}
+
+async function loadIncome() {
+  const from = document.getElementById('date-from').value;
+  const to = document.getElementById('date-to').value;
+  try {
+    const res = await fetch(`${API}/api/income?date_from=${from}&date_to=${to}`);
+    const data = await res.json();
+    const grouped = {};
+    data.forEach(d => {
+      if (!grouped[d.category]) grouped[d.category] = { category: d.category, currency: d.currency, amount: 0 };
+      grouped[d.category].amount += d.amount;
+    });
+    buildDonut('income-chart', 'income-legend', Object.values(grouped), ['#00D4AA','#54A0FF','#FF9F43']);
+  } catch(e) {}
+}
+
+async function loadTransactions(category) {
+  const from = document.getElementById('date-from').value;
+  const to = document.getElementById('date-to').value;
+  const list = document.getElementById('tr-list');
+  const totalRow = document.getElementById('tr-total');
+  list.innerHTML = '<div class="loading">Loading…</div>';
+  totalRow.style.display = 'none';
+
+  try {
+    const res = await fetch(`${API}/api/transactions?category=${encodeURIComponent(category)}&date_from=${from}&date_to=${to}`);
+    const data = await res.json();
+    allTransactions = data;
+
+    if (!data.length) {
+      list.innerHTML = '<div class="empty">No transactions in this category</div>';
+      return;
+    }
+
+    list.innerHTML = data.map(tr => `
+      <div class="tr-row">
+        <div class="tr-icon">${getIcon(category)}</div>
+        <div class="tr-info">
+          <div class="tr-name">${tr.remittance_information || '—'}</div>
+          <div class="tr-date">${tr.booking_date}</div>
+        </div>
+        <div class="tr-amount debit">${fmtAmount(tr.amount, tr.currency)}</div>
+      </div>
+    `).join('');
+
+    const total = data.reduce((s, t) => s + t.amount, 0);
+    const currency = data[0]?.currency || '';
+    document.getElementById('tr-total-val').textContent = fmtAmount(total, currency);
+    totalRow.style.display = 'flex';
+  } catch(e) {
+    list.innerHTML = '<div class="empty">Could not load transactions</div>';
+  }
+}
+
+function buildCategoryTabs(categories) {
+  const tabs = document.getElementById('category-tabs');
+  tabs.innerHTML = `<button class="tab active" onclick="selectCategory(null, this)">All</button>` +
+    categories.map(cat => `
+      <button class="tab" onclick="selectCategory('${cat}', this)">${cat}</button>
+    `).join('');
+  activeCategory = null;
+  loadAllTransactions();
+}
+
+function selectCategory(cat, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  activeCategory = cat;
+  if (cat === null) {
+    loadAllTransactions();
+  } else {
+    loadTransactions(cat);
+  }
+}
+
+async function loadAll() {
+  const from = document.getElementById('date-from').value;
+  const to = document.getElementById('date-to').value;
+  const fromDate = new Date(from);
+  const toDate = new Date(to);
+  if (fromDate.getMonth() === toDate.getMonth()) {
+    document.getElementById('period-title').textContent =
+      fromDate.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+  } else {
+    document.getElementById('period-title').textContent =
+      `${fromDate.toLocaleDateString('en-GB', { month: 'short' })} – ${toDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`;
+  }
+  loadBalances();
+  const categories = await loadSpending();
+  loadIncome();
+  buildCategoryTabs(categories);
+}
+
+async function loadAllTransactions() {
+  const from = document.getElementById('date-from').value;
+  const to = document.getElementById('date-to').value;
+  const list = document.getElementById('tr-list');
+  const totalRow = document.getElementById('tr-total');
+  list.innerHTML = '<div class="loading">Loading…</div>';
+  totalRow.style.display = 'none';
+
+  try {
+    const categories = [...document.querySelectorAll('.tab:not(.tab:first-child)')]
+      .map(t => t.textContent);
+    
+    const results = await Promise.all(
+      categories.map(cat =>
+        fetch(`${API}/api/transactions?category=${encodeURIComponent(cat)}&date_from=${from}&date_to=${to}`)
+          .then(r => r.json())
+      )
+    );
+
+    const data = results.flat().sort((a, b) => b.booking_date.localeCompare(a.booking_date));
+
+    if (!data.length) {
+      list.innerHTML = '<div class="empty">No transactions</div>';
+      return;
+    }
+
+    list.innerHTML = data.map(tr => `
+      <div class="tr-row">
+        <div class="tr-icon">${getIcon(tr.category)}</div>
+        <div class="tr-info">
+          <div class="tr-name">${tr.remittance_information || '—'}</div>
+          <div class="tr-date">${tr.booking_date}</div>
+        </div>
+        <div class="tr-amount debit">${fmtAmount(tr.amount, tr.currency)}</div>
+      </div>
+    `).join('');
+  } catch(e) {
+    list.innerHTML = '<div class="empty">Could not load transactions</div>';
+  }
+}
+
+initDates();
+loadAll();
+</script>
+</body>
+</html>
