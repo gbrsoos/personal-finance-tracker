@@ -438,7 +438,7 @@ async function loadBalances() {
 
     grid.innerHTML = data.map(b => `
       <div class="balance-card">
-        <div class="label">${b.bank_name}</div>
+        <div class="label">${b.account_name || b.bank_name} ${b.currency}</div>
         <div class="amount">${fmtAmount(b.amount, '')}</div>
         <span class="currency-badge">${b.currency}</span>
         <div class="updated">Updated ${b.retrieved_at}</div>

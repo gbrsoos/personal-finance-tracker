@@ -33,4 +33,4 @@ class Settings(BaseSettings):
     currencies: list[str] = Field(["HUF", "EUR", "USD"], description="List of currencies used by the app")
 
 
-settings = Settings()
+settings = Settings() # type: ignore[call-arg]

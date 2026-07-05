@@ -11,24 +11,28 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def uid_retriever() -> dict[str, list[str]]:
+def uid_detail_retriever() -> dict[str, list[dict]]:
     """
     Read the saved sessions file and return a mapping of bank name →
-    list of account UIDs for every configured bank.
+    list of account UIDs and additional detail pairs for every configured bank.
     """
-    account_uids: dict[str, list[str]] = {}
+    uid_detail_pairs: dict[str, list[dict]] = {}
 
     with open(settings.sessions_info_path, "r") as f:
         session_info = json.load(f)
 
     for bank in BANKS.keys():
-        account_uids[bank] = []
+        uid_detail_pairs[bank] = []
 
         for account in range(len(session_info[bank]['accounts'])):
-            account_uid = session_info[bank]['accounts'][account]['uid']
-            account_uids[bank].append(account_uid)
+            account_uid: str = session_info[bank]['accounts'][account]['uid']
+            account_detail: str| None = session_info[bank]['accounts'][account].get('details')
+            uid_detail_pairs[bank].append({
+                "uid": account_uid,
+                "detail": account_detail
+                })
 
-    return account_uids
+    return uid_detail_pairs
 
 
 def get_date_from() -> str:
@@ -42,10 +46,12 @@ def get_date_from() -> str:
 
     if last_date is None:
         return  (datetime.now(timezone.utc) - timedelta(days=90)).date().isoformat()
-    else:
-        return last_date.isoformat()
+    
+    today = datetime.now(timezone.utc).date()
+    return min(last_date, today).isoformat()
 
-def fetch_transactions(account_uids: dict[str, list[str]]) -> dict[tuple[str, str], list[dict]]:
+
+def fetch_transactions(uid_detail_pairs: dict[str, list[dict]]) -> dict[tuple[str, str, str | None], list[dict]]:
     """
     Fetch all transactions for every account from the Enable Banking API,
     following pagination via continuation keys.
@@ -54,11 +60,14 @@ def fetch_transactions(account_uids: dict[str, list[str]]) -> dict[tuple[str, st
     of raw transaction dicts as returned by the API.
     """
     base_headers = jwt_gen()
-    all_transactions: dict[tuple[str, str], list[dict]] = {}
+    all_transactions: dict[tuple[str, str, str | None], list[dict]] = {}
 
-    for bank in account_uids:
-        for account_uid in account_uids[bank]:
-            all_transactions[(bank, account_uid)] = []
+    for bank in uid_detail_pairs:
+        for uid_detail_pair in uid_detail_pairs[bank]:
+            account_uid: str = uid_detail_pair["uid"]
+            account_detail: str | None = uid_detail_pair["detail"]
+
+            all_transactions[(bank, account_uid, account_detail)] = []
 
             query = {
                 "date_from": get_date_from(),
@@ -74,7 +83,7 @@ def fetch_transactions(account_uids: dict[str, list[str]]) -> dict[tuple[str, st
                 )
                 if r.status_code == 200:
                     resp_data = r.json()
-                    all_transactions[(bank, account_uid)].extend(resp_data["transactions"])
+                    all_transactions[(bank, account_uid, account_detail)].extend(resp_data["transactions"])
                     continuation_key = resp_data.get("continuation_key")
                     if not continuation_key:
                         logger.info("No continuation key. All transactions were fetched")
@@ -95,7 +104,7 @@ def fetch_transactions(account_uids: dict[str, list[str]]) -> dict[tuple[str, st
     return all_transactions
 
 
-def fetch_balances(account_uids: dict[str, list[str]]) -> dict[tuple[str, str], list[dict]]:
+def fetch_balances(uid_detail_pairs: dict[str, list[dict]]) -> dict[tuple[str, str, str | None], list[dict]]:
     """
     Fetch the current balances for every account from the Enable Banking API.
 
@@ -103,16 +112,19 @@ def fetch_balances(account_uids: dict[str, list[str]]) -> dict[tuple[str, str], 
     of raw balance dicts as returned by the API.
     """
     base_headers = jwt_gen()
-    all_balances: dict[tuple[str, str], list[dict]] = {}
+    all_balances: dict[tuple[str, str, str | None], list[dict]] = {}
 
-    for bank in account_uids:
-        for account_uid in account_uids[bank]:
-            all_balances[(bank, account_uid)] = []
+    for bank in uid_detail_pairs:
+        for uid_detail_pair in uid_detail_pairs[bank]:
+            account_uid: str = uid_detail_pair["uid"]
+            account_detail: str | None = uid_detail_pair["detail"]
+
+            all_balances[(bank, account_uid, account_detail)] = []
 
             r = requests.get(f"{API_ORIGIN}/accounts/{account_uid}/balances", headers=base_headers)
             if r.status_code == 200:
                 resp_data = r.json()
-                all_balances[(bank, account_uid)].extend(resp_data["balances"])
+                all_balances[(bank, account_uid, account_detail)].extend(resp_data["balances"])
                 logger.info("Balance for %s - %s has been retrieved.", bank, account_uid)
             else:
                 if r.status_code == 401:
@@ -130,7 +142,7 @@ def fetch_balances(account_uids: dict[str, list[str]]) -> dict[tuple[str, str], 
 
 
 if __name__ == "__main__":
-    account_uids = uid_retriever()
+    account_uids = uid_detail_retriever()
     transactions = fetch_transactions(account_uids)
     balances = fetch_balances(account_uids)
     print(transactions)

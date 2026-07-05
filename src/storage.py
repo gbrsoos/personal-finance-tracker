@@ -38,6 +38,7 @@ class Balance(Base):
 
     bank_name: Mapped[str] = mapped_column(String)
     account_uid: Mapped[str] = mapped_column(String, name="subaccount_id")
+    account_name: Mapped[str] = mapped_column(String, nullable=True)
     amount: Mapped[Decimal] = mapped_column(Numeric(precision=20, scale=6))
     currency: Mapped[str] = mapped_column(String)
     balance_type: Mapped[str] = mapped_column(String, nullable=True)

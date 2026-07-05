@@ -10,10 +10,11 @@ def query_balances() -> list[Row]:
             Balance.bank_name, 
             Balance.currency, 
             Balance.amount, 
+            Balance.account_name,
             func.max(Balance.retrieved_at)
             ).filter(
                 Balance.balance_type == "ITAV"
-            ).group_by(Balance.account_uid, Balance.currency).all()
+            ).group_by(Balance.account_uid, Balance.currency, Balance.account_name).all()
         
         return balances
 

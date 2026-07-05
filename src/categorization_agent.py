@@ -71,7 +71,7 @@ def update_categories(category_dict: dict[str, str]) -> None:
     with get_session() as session:
         for id, cat in category_dict.items():
             tr = session.get(Transaction, id)
-            if tr:
+            if tr and tr.category is None:
                 tr.category = cat
 
         session.commit()
