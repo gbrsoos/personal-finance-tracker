@@ -36,10 +36,14 @@ class SessionMissingError(Exception):
     Raised when the session info JSON is missing.
     """
 
+class _AuthCallbackServer(HTTPServer):
+    auth_code: str | None = None
+
 # Local listener
 class CallbackHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         """Extract the OAuth authorization code from the redirect URL query string."""
+        self.server: _AuthCallbackServer
         self.server.auth_code = parse_qs(
             urlparse(self.path).query
         )["code"][0]
@@ -48,7 +52,7 @@ class CallbackHandler(BaseHTTPRequestHandler):
         self.wfile.write(b"Authentication successful, you can close this tab.")
 
 
-def capture_auth_code() -> str:
+def capture_auth_code() -> str | None:
     """
     Start a local HTTPS server on port 8000, handle a single OAuth redirect
     request, and return the extracted authorization code.
@@ -56,7 +60,7 @@ def capture_auth_code() -> str:
     ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     ssl_context.load_cert_chain(settings.ssl_cert_path, settings.ssl_key_path)
 
-    server = HTTPServer(("localhost", 8000), CallbackHandler)
+    server: _AuthCallbackServer = _AuthCallbackServer(("localhost", 8000), CallbackHandler)
     server.socket = ssl_context.wrap_socket(server.socket, server_side=True)
 
     server.auth_code = None
@@ -146,6 +150,10 @@ def create_session(base_headers: dict[str, str]) -> dict | None:
     success, or None on failure.
     """
     auth_code = capture_auth_code()
+    if auth_code is None:
+        logger.error("No authorization code received from callback.")
+        return None
+
     r = requests.post(f"{API_ORIGIN}/sessions", json={"code": auth_code}, headers=base_headers)
     if r.status_code == 200:
         session = r.json()

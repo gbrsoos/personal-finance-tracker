@@ -1,6 +1,6 @@
 from config import BANKS
 from bank_client import initialize_session
-from fetcher import uid_retriever, fetch_transactions, fetch_balances
+from fetcher import uid_detail_retriever, fetch_transactions, fetch_balances
 from processor import process_transactions, process_balances
 from categorization_agent import run_categorization
 import logging
@@ -20,22 +20,26 @@ def main() -> None:
     for bank, country in BANKS.items():
         initialize_session(name=bank, country=country)
 
-    account_uids = uid_retriever()
-    all_transactions = fetch_transactions(account_uids=account_uids)
-    all_balances = fetch_balances(account_uids=account_uids)
+    uid_detail_pairs = uid_detail_retriever()
+    all_transactions = fetch_transactions(uid_detail_pairs=uid_detail_pairs)
+    all_balances = fetch_balances(uid_detail_pairs=uid_detail_pairs)
 
     for bank in BANKS:
-        for i in range(len(account_uids[bank])):
-            logger.info("Fetching new account")
+        for uid_detail_pair in uid_detail_pairs[bank]:
+            account_uid = uid_detail_pair["uid"]
+            account_detail = uid_detail_pair["detail"]
+
             process_transactions(
-                transaction_list=all_transactions[(bank, account_uids[bank][i])],
+                transaction_list=all_transactions[(bank, account_uid, account_detail)],
                 bank_name=bank,
-                account_uid=account_uids[bank][i]
+                account_uid=account_uid
             )
             process_balances(
-                balance_list=all_balances[(bank, account_uids[bank][i])],
+                balance_list=all_balances[(bank, account_uid, account_detail)],
                 bank_name=bank,
-                account_uid=account_uids[bank][i])
+                account_uid=account_uid,
+                account_detail=account_detail
+            )
 
     run_categorization()
 

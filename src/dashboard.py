@@ -10,6 +10,7 @@ app = FastAPI()
 def serve_dashboard():
     return FileResponse("src/dashboard.html")
 
+
 @app.get("/api/balances")
 def get_balances_api() -> list[dict]:
     output: list[dict] = []
@@ -20,7 +21,8 @@ def get_balances_api() -> list[dict]:
             "bank_name": balance[0],
             "currency": balance[1],
             "amount": float(balance[2]),
-            "retrieved_at": balance[3].strftime("%Y-%m-%d %H:%M")
+            "account_name": balance[3],
+            "retrieved_at": balance[4].strftime("%Y-%m-%d %H:%M"),
         })
 
     return output

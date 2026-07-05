@@ -75,7 +75,7 @@ def process_transactions(transaction_list: list[dict], bank_name: str, account_u
 
 
 # Balance branch
-def prepare_balance(balance: dict, bank_name: str, account_uid: str) -> Balance:
+def prepare_balance(balance: dict, bank_name: str, account_uid: str, account_name: str | None = None) -> Balance:
     """
     Parse a raw balance payload from the Enable Banking API and return an
     unsaved Balance ORM object ready for insertion.
@@ -93,6 +93,7 @@ def prepare_balance(balance: dict, bank_name: str, account_uid: str) -> Balance:
     output = Balance(
         bank_name=bank_name,
         account_uid=account_uid,
+        account_name=account_name,
         amount=amount,
         currency=currency,
         balance_type=balance_type,
@@ -115,14 +116,14 @@ def save_balance(balance: Balance) -> None:
             logger.error("Failed to save balance for account %s: %s", balance.account_uid, e)
 
 
-def process_balances(balance_list: list[dict], bank_name: str, account_uid: str) -> None:
+def process_balances(balance_list: list[dict], bank_name: str, account_uid: str, account_detail: str) -> None:
     """Prepare and save every balance snapshot in the list, logging progress per entry."""
-    num_tr = len(balance_list)
+    num_bal = len(balance_list)
 
     for i, bal in enumerate(balance_list):
-        processed_bal = prepare_balance(bal, bank_name, account_uid)
+        processed_bal = prepare_balance(bal, bank_name, account_uid, account_detail)
         save_balance(processed_bal)
-        logger.info("Balance %d/%d has been processed.", i+1, num_tr)
+        logger.info("Balance %d/%d has been processed.", i+1, num_bal)
 
 
 """ if __name__ == "__main__":
@@ -144,9 +145,10 @@ if __name__ == "__main__":
 
     bank_name = "Revolut"
     account_uid = sessions[bank_name]["accounts"][0]["uid"]
+    account_detail = sessions[bank_name]["accounts"][0].get("details")
     file_name = "balances_test.json"
 
     with open(f"data/{file_name}", "r") as f:
         balance_list = json.load(f)
 
-    process_balances(balance_list=balance_list, bank_name=bank_name, account_uid=account_uid)
+    process_balances(balance_list=balance_list, bank_name=bank_name, account_uid=account_uid, account_detail=account_detail)
