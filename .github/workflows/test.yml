@@ -29,7 +29,7 @@ jobs:
           SSL_CERT_PATH: /tmp/test-cert.pem
           SSL_KEY_PATH: /tmp/test-ssl-key.pem
           SESSIONS_INFO_PATH: /tmp/test-sessions.json
-          DATABASE_URL: sqlite:///:memory:
+          DATABASE_URL: "sqlite:///:memory:"
           ANTHROPIC_API_KEY: test-key
           OPENAI_API_KEY: test-key
           CURRENCIES: '["HUF","EUR","USD"]'
