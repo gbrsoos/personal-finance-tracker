@@ -1,0 +1,36 @@
+name: Tests
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run tests
+        env:
+          ENABLE_BANKING_APP_ID: test-app-id
+          ENABLE_BANKING_KEY_PATH: /tmp/test.pem
+          REDIRECT_URL: https://localhost/callback
+          SSL_CERT_PATH: /tmp/test-cert.pem
+          SSL_KEY_PATH: /tmp/test-ssl-key.pem
+          SESSIONS_INFO_PATH: /tmp/test-sessions.json
+          DATABASE_URL: sqlite:///:memory:
+          ANTHROPIC_API_KEY: test-key
+          OPENAI_API_KEY: test-key
+          CURRENCIES: '["HUF","EUR","USD"]'
+        run: pytest -v
