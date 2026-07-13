@@ -33,7 +33,7 @@ Enable Banking API (PSD2)
 - **Automatic categorization** using Claude AI with vector similarity search
 - **Learning from corrections** — recategorize once, remember forever
 - **Natural language interface** via Claude desktop MCP integration
-- **Read-only web dashboard** with spending/income donut charts and transaction list
+- **Read-only web dashboard** with spending/income donut charts and a transaction list showing category per transaction
 - **Multi-bank, multi-currency** support
 - **Incremental sync** — only fetches new transactions on each run
 
@@ -65,7 +65,7 @@ cd personal-finance-tracker
 ```bash
 conda create -n finance-tracker python=3.12
 conda activate finance-tracker
-pip install -r requirements.txt
+poetry install
 ```
 
 ### 3. Generate RSA keys
@@ -117,7 +117,10 @@ DATABASE_URL=sqlite:///./data/finance.db
 ANTHROPIC_API_KEY=sk-ant-...
 OPENAI_API_KEY=sk-...
 CURRENCIES=["HUF","EUR","USD"]
+DEPLOY_CWD=/absolute/path/to/personal-finance-tracker
 ```
+
+> `DEPLOY_CWD` is only needed on the Pi, where it tells `deploy_watcher.py` which directory to run `git pull`, `poetry install`, and migrations in.
 
 ### 7. Configure your banks
 
@@ -228,6 +231,12 @@ Add:
 
 ---
 
+## Automatic deployment
+
+On the Raspberry Pi, `deploy_watcher.py` runs as a `systemd` service and polls the GitHub releases API every 10 minutes. When the latest release tag differs from the version in the deployed `pyproject.toml`, it automatically pulls the latest changes, reinstalls dependencies with Poetry, runs pending Alembic migrations, and restarts the scheduler and dashboard services — so shipping a new GitHub release is enough to deploy it, no manual SSH step required.
+
+---
+
 ## Updating an existing installation
 
 When a new version introduces schema changes, apply them without losing data:
@@ -256,6 +265,7 @@ personal-finance-tracker/
 │   ├── mcp_server.py             # FastMCP server (Claude desktop interface)
 │   ├── dashboard.py              # FastAPI read-only web dashboard
 │   ├── dashboard.html            # Dashboard frontend
+│   ├── deploy_watcher.py         # Polls GitHub releases, auto-deploys on new tag
 │   └── prompts/
 │       └── categorization_system_prompt.txt
 ├── migrations/                   # Alembic database migrations
@@ -267,7 +277,7 @@ personal-finance-tracker/
 ├── .env                          # Git-ignored — your credentials
 ├── .env.example                  # Template for credentials
 ├── alembic.ini                   # Alembic configuration
-├── requirements.txt
+├── pyproject.toml                # Poetry project + dependency definitions
 └── README.md
 ```
 
