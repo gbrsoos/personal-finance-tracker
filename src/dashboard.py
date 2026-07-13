@@ -70,7 +70,8 @@ def get_transactions_by_category_api(category: str, date_from: str, date_to: str
             "currency": tr[1],
             "amount": float(tr[2]),
             "remittance_information":tr[3],
-            "booking_date":tr[4].strftime("%Y-%m-%d")
+            "booking_date":tr[4].strftime("%Y-%m-%d"),
+            "category": tr[5]
         })
 
     return output

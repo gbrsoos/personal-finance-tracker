@@ -71,7 +71,8 @@ def query_transactions_by_category(category: str, date_from: str, date_to: str) 
             Transaction.currency,
             Transaction.amount,
             Transaction.remittance_information,
-            Transaction.booking_date
+            Transaction.booking_date,
+            Transaction.category
         ).filter(Transaction.booking_date >= date_from_parsed
         ).filter(Transaction.booking_date <= date_to_parsed
         ).filter(Transaction.category == category).all()
