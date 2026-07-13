@@ -16,3 +16,6 @@ data/
 
 # Test
 src/test.ipynb
+
+# Misc
+DEPLOYMENT.md

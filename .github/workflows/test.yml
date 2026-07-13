@@ -18,8 +18,11 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install Poetry
+        run: pip install poetry
+
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: poetry install
 
       - name: Run tests
         env:

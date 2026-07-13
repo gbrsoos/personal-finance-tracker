@@ -38,7 +38,8 @@ def deploy():
     migrations, and restart the scheduler and dashboard services.
     """
     subprocess.run(["git", "pull"], cwd=settings.deploy_cwd, check=True)
-    subprocess.run(["venv/bin/pip", "install", "-r", "requirements.txt"], cwd=settings.deploy_cwd, check=True)
+    subprocess.run(["venv/bin/pip", "install", "poetry"], cwd=settings.deploy_cwd, check=True)
+    subprocess.run(["poetry", "install"], cwd=settings.deploy_cwd, check=True)
     subprocess.run(["venv/bin/alembic", "upgrade", "head"], cwd=settings.deploy_cwd, check=True, env={"PYTHONPATH": "src"})
     subprocess.run(["venv/bin/python", "src/scheduler.py"], cwd=settings.deploy_cwd, check=True, env={"PYTHONPATH": "src"})
     subprocess.run(["sudo", "systemctl", "restart", "finance-dashboard"], check=True)
