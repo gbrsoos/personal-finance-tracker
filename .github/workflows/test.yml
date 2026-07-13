@@ -33,4 +33,5 @@ jobs:
           ANTHROPIC_API_KEY: test-key
           OPENAI_API_KEY: test-key
           CURRENCIES: '["HUF","EUR","USD"]'
+          DEPLOY_CWD: /tmp/test-deploy
         run: python -m pytest -v
