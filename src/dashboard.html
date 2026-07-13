@@ -562,7 +562,7 @@ async function loadTransactions(category) {
         <div class="tr-icon">${getIcon(category)}</div>
         <div class="tr-info">
           <div class="tr-name">${tr.remittance_information || '—'}</div>
-          <div class="tr-date">${tr.booking_date}</div>
+          <div class="tr-date">${tr.booking_date} · ${tr.category || '—'}</div>
         </div>
         <div class="tr-amount debit">${fmtAmount(tr.amount, tr.currency)}</div>
       </div>
@@ -647,7 +647,7 @@ async function loadAllTransactions() {
         <div class="tr-icon">${getIcon(tr.category)}</div>
         <div class="tr-info">
           <div class="tr-name">${tr.remittance_information || '—'}</div>
-          <div class="tr-date">${tr.booking_date}</div>
+          <div class="tr-date">${tr.booking_date} · ${tr.category || '—'}</div>
         </div>
         <div class="tr-amount debit">${fmtAmount(tr.amount, tr.currency)}</div>
       </div>
