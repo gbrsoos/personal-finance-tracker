@@ -1,9 +1,11 @@
-from config import settings
-from storage import get_session, Transaction
-from embedder import find_similar_examples
-from itertools import batched
-import anthropic
 import json
+from itertools import batched
+
+import anthropic
+
+from config import settings
+from embedder import find_similar_examples
+from storage import Transaction, get_session
 
 client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
 

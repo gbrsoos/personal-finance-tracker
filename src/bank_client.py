@@ -1,16 +1,16 @@
-from config import settings, BANKS
-from typing import Any
-
-import logging
 import json
-from http.server import HTTPServer, BaseHTTPRequestHandler
-import uuid
-from datetime import datetime, timezone, timedelta
-from urllib.parse import urlparse, parse_qs
+import logging
 import ssl
+import uuid
+from datetime import datetime, timedelta, timezone
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from typing import Any
+from urllib.parse import parse_qs, urlparse
 
-import requests
 import jwt as pyjwt
+import requests
+
+from config import BANKS, settings
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

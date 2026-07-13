@@ -1,7 +1,9 @@
-from storage import get_session, Balance, Transaction
+from datetime import date
+
 from sqlalchemy import func
 from sqlalchemy.engine import Row
-from datetime import date
+
+from storage import Balance, Transaction, get_session
 
 
 def query_balances() -> list[Row]:

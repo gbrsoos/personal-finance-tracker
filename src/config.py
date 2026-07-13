@@ -1,6 +1,7 @@
+import os
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
-import os
 
 
 model_config = SettingsConfigDict(
@@ -31,6 +32,7 @@ class Settings(BaseSettings):
     anthropic_api_key: str = Field(..., description="Anthropic API Key")
     openai_api_key: str = Field(..., description="OpenAI API Key")
     currencies: list[str] = Field(["HUF", "EUR", "USD"], description="List of currencies used by the app")
+    deploy_cwd: str = Field(..., description="Route to the remote server folder")
 
 
 settings = Settings() # type: ignore[call-arg]

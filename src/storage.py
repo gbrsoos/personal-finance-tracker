@@ -1,11 +1,13 @@
 from contextlib import contextmanager
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
-from sqlalchemy import Numeric, Date, DateTime, PrimaryKeyConstraint, String, create_engine, LargeBinary, event
-from decimal import Decimal
 from datetime import date, datetime
-from config import settings
+from decimal import Decimal
 from typing import Optional
+
 import sqlite_vec
+from sqlalchemy import Date, DateTime, LargeBinary, Numeric, PrimaryKeyConstraint, String, create_engine, event
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
+
+from config import settings
 
 
 class Base(DeclarativeBase):

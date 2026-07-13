@@ -1,9 +1,11 @@
-from config import settings
-from openai import OpenAI
-import sqlite_vec
-from storage import get_session, CategorizationExample
 from datetime import datetime, timezone
+
+import sqlite_vec
+from openai import OpenAI
 from sqlalchemy import text
+
+from config import settings
+from storage import CategorizationExample, get_session
 
 client = OpenAI(api_key=settings.openai_api_key)
 
