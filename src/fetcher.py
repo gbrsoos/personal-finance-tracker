@@ -1,11 +1,13 @@
-from config import settings, BANKS
 import json
-from bank_client import API_ORIGIN, jwt_gen
-from datetime import datetime, timezone, timedelta
-import requests
 import logging
+from datetime import datetime, timedelta, timezone
+
+import requests
 from sqlalchemy import func
-from storage import get_session, Transaction
+
+from bank_client import API_ORIGIN, jwt_gen
+from config import BANKS, settings
+from storage import Transaction, get_session
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

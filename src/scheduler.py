@@ -1,9 +1,10 @@
-from config import BANKS
-from bank_client import initialize_session
-from fetcher import uid_detail_retriever, fetch_transactions, fetch_balances
-from processor import process_transactions, process_balances
-from categorization_agent import run_categorization
 import logging
+
+from bank_client import initialize_session
+from categorization_agent import run_categorization
+from config import BANKS
+from fetcher import fetch_balances, fetch_transactions, uid_detail_retriever
+from processor import process_balances, process_transactions
 logging.basicConfig(level=logging.INFO)
 
 logger = logging.getLogger(__name__)

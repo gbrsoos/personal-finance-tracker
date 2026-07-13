@@ -1,3 +1,8 @@
+[project]
+    name = "personal-finance-tracker"
+    version = "0.2.0"
+    description = "Self-hosted personal finance tracker with PSD2 bank integration and AI categorization"
+
 [tool.pytest.ini_options]
-pythonpath = ["src"]
-testpaths = ["tests"]
+    pythonpath = ["src"]
+    testpaths = ["tests"]
