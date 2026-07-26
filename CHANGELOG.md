@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.3.1] — 2026-07-26
+
+### Fixed
+- Deploy watcher now uses a configurable `POETRY_PATH` setting instead of relying on PATH resolution, fixing deployment failures caused by systemd's restricted environment
+
+## [0.3.0] — 2026-07-26
+
+### Added
+- Spending / Income / Transfer toggle above the dashboard transaction list, filtering categories by type
+- `query_categories()` in `queries.py` and `/api/categories` endpoint in `dashboard.py`
+- Transactions now ordered by booking date descending (most recent first)
+
+### Fixed
+- Duplicate `run` key in GitHub Actions CI workflow that was blocking merges
+- CI environment variables missing `DEPLOY_CWD`, causing test failures
+
 ## [0.2.0] — 2026-07-13
 
 ### Added
