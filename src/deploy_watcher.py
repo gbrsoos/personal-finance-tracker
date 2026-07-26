@@ -38,10 +38,21 @@ def deploy():
     migrations, and restart the scheduler and dashboard services.
     """
     subprocess.run(["git", "pull"], cwd=settings.deploy_cwd, check=True)
-    subprocess.run(["venv/bin/pip", "install", "poetry"], cwd=settings.deploy_cwd, check=True)
-    subprocess.run(["poetry", "install"], cwd=settings.deploy_cwd, check=True)
-    subprocess.run(["venv/bin/alembic", "upgrade", "head"], cwd=settings.deploy_cwd, check=True, env={"PYTHONPATH": "src"})
-    subprocess.run(["venv/bin/python", "src/scheduler.py"], cwd=settings.deploy_cwd, check=True, env={"PYTHONPATH": "src"})
+    subprocess.run(
+        [settings.poetry_path, "install", "--no-root"],
+        cwd=settings.deploy_cwd, check=True,
+        env={"PYTHON_KEYRING_BACKEND": "keyring.backends.null.Keyring"}
+    )
+    subprocess.run(
+        [settings.poetry_path, "run", "python", "-m", "alembic", "upgrade", "head"],
+        cwd=settings.deploy_cwd, check=True,
+        env={"PYTHONPATH": "src", "PYTHON_KEYRING_BACKEND": "keyring.backends.null.Keyring"}
+    )
+    subprocess.run(
+        [settings.poetry_path, "run", "python", "src/scheduler.py"],
+        cwd=settings.deploy_cwd, check=True,
+        env={"PYTHONPATH": "src", "PYTHON_KEYRING_BACKEND": "keyring.backends.null.Keyring"}
+    )
     subprocess.run(["sudo", "systemctl", "restart", "finance-dashboard"], check=True)
 
 

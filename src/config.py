@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     openai_api_key: str = Field(..., description="OpenAI API Key")
     currencies: list[str] = Field(["HUF", "EUR", "USD"], description="List of currencies used by the app")
     deploy_cwd: str = Field(..., description="Route to the remote server folder")
+    poetry_path: str = Field(..., description="Absolute path to the poetry executable")
 
 
 settings = Settings() # type: ignore[call-arg]
