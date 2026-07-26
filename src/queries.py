@@ -3,7 +3,7 @@ from datetime import date
 from sqlalchemy import func
 from sqlalchemy.engine import Row
 
-from storage import Balance, Transaction, get_session
+from storage import Balance, Transaction, Category, get_session
 
 
 def query_balances() -> list[Row]:
@@ -91,3 +91,10 @@ def query_uncategorized_transactions() -> list[Row]:
         ).filter(Transaction.category.is_(None)).all()
 
         return uncat_trs
+
+
+def query_categories(category_type: str) -> list[Row]:
+    with get_session() as session:
+        return session.query(Category.category_name).filter(
+            Category.category_type == category_type
+        ).all()

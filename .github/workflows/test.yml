@@ -22,9 +22,10 @@ jobs:
         run: pip install poetry
 
       - name: Install dependencies
-        run: poetry install
+        run: poetry install --no-root
 
       - name: Run tests
+        run: poetry run python -m pytest -v
         env:
           ENABLE_BANKING_APP_ID: test-app-id
           ENABLE_BANKING_KEY_PATH: /tmp/test.pem
@@ -39,3 +40,4 @@ jobs:
           DEPLOY_CWD: /tmp/test-deploy
           POETRY_PATH: /usr/bin/poetry
         run: python -m pytest -v
+
