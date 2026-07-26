@@ -13,6 +13,7 @@ os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
 os.environ.setdefault("ANTHROPIC_API_KEY", "test-anthropic-key")
 os.environ.setdefault("OPENAI_API_KEY", "test-openai-key")
 os.environ.setdefault("DEPLOY_CWD", "/tmp/test-deploy")
+os.environ.setdefault("POETRY_PATH", "/usr/bin/poetry")
 
 from datetime import date, datetime, timezone
 from decimal import Decimal
