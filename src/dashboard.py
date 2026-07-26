@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from sqlalchemy.engine import Row
 
-from queries import query_balances, query_income, query_spending, query_transactions_by_category
+from queries import query_balances, query_income, query_spending, query_transactions_by_category, query_categories
 
 app = FastAPI()
 
@@ -75,3 +75,9 @@ def get_transactions_by_category_api(category: str, date_from: str, date_to: str
         })
 
     return output
+
+
+@app.get("/api/categories")
+def get_categories_api(category_type: str) -> list[str]:
+    categories: list[Row] = query_categories(category_type)
+    return [c[0] for c in categories]

@@ -7,6 +7,7 @@ from queries import (
     query_spending,
     query_transactions_by_category,
     query_uncategorized_transactions,
+    query_categories,
 )
 
 
@@ -149,3 +150,17 @@ def test_query_uncategorized_transactions_returns_only_null_category(db_session,
 
     assert len(results) == 1
     assert results[0].id == uncategorized.id
+
+
+def test_query_categories_filters_by_type(db_session):
+    from storage import Category
+    db_session.add_all([
+        Category(category_name="Groceries", category_type="spending"),
+        Category(category_name="Salary", category_type="income"),
+    ])
+    db_session.commit()
+
+    results = query_categories("spending")
+
+    assert len(results) == 1
+    assert results[0][0] == "Groceries"
