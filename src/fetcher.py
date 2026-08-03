@@ -40,17 +40,19 @@ def uid_detail_retriever() -> dict[str, list[dict]]:
 def get_date_from() -> str:
     """
     Return the ISO date string to use as the start of the next transaction
-    fetch. Uses the most recent booking date already in the database, or
-    falls back to 90 days ago if no transactions exist yet.
+    fetch. Uses the most recent booking date already in the database with a 3-day overlap buffer, to handle the edge-cases where
+    late transactions arrive with older date.
+    Otherwise falls back to 90 days ago if no transactions exist yet.
     """
     with get_session() as session:
         last_date = session.query(func.max(Transaction.booking_date)).scalar()
-
+    
     if last_date is None:
-        return  (datetime.now(timezone.utc) - timedelta(days=90)).date().isoformat()
+        return (datetime.now(timezone.utc) - timedelta(days=90)).date().isoformat()
     
     today = datetime.now(timezone.utc).date()
-    return min(last_date, today).isoformat()
+    buffered_date = last_date - timedelta(days=3)  # 3-day overlap buffer
+    return min(buffered_date, today).isoformat()
 
 
 def fetch_transactions(uid_detail_pairs: dict[str, list[dict]]) -> dict[tuple[str, str, str | None], list[dict]]:
