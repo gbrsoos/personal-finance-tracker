@@ -257,7 +257,34 @@
       border-color: var(--border-strong);
       color: var(--text-primary);
     }
-    
+
+    .type-toggle {
+      display: inline-flex;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      padding: 3px;
+      margin-bottom: 12px;
+    }
+
+    .type-btn {
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 16px;
+      border-radius: 50px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+      text-transform: capitalize;
+    }
+
+    .type-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
     .tr-row {
       display: flex;
       align-items: center;
@@ -373,10 +400,15 @@
   </div>
 
   <div class="transactions">
-    <div class="transactions-header">
+    <div class="transactions-header" style="flex-direction: column; align-items: flex-start; gap: 12px;">
       <div class="card-title">Transactions</div>
-      <div class="category-tabs" id="category-tabs"></div>
+      <div class="type-toggle" id="type-toggle">
+        <button class="type-btn active" data-type="spending" onclick="selectType('spending', this)">Spending</button>
+        <button class="type-btn" data-type="income" onclick="selectType('income', this)">Income</button>
+        <button class="type-btn" data-type="transfer" onclick="selectType('transfer', this)">Transfer</button>
     </div>
+    <div class="category-tabs" id="category-tabs"></div>
+  </div>
     <div class="tr-list" id="tr-list">
       <div class="loading">Loading transactions…</div>
     </div>
@@ -403,6 +435,20 @@ const CATEGORY_ICONS = {
 let spendingChart, incomeChart;
 let allTransactions = [];
 let activeCategory = null;
+let activeType = 'spending';
+
+async function selectType(type, el) {
+  document.querySelectorAll('.type-btn').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  activeType = type;
+  try {
+    const res = await fetch(`${API}/api/categories?category_type=${type}`);
+    const categories = await res.json();
+    buildCategoryTabs(categories);
+  } catch(e) {
+    document.getElementById('tr-list').innerHTML = '<div class="empty">Could not load categories</div>';
+  }
+}
 
 function getIcon(cat) { return CATEGORY_ICONS[cat] || CATEGORY_ICONS['default']; }
 
@@ -609,8 +655,10 @@ async function loadAll() {
       `${fromDate.toLocaleDateString('en-GB', { month: 'short' })} – ${toDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`;
   }
   loadBalances();
-  const categories = await loadSpending();
+  await loadSpending();
   loadIncome();
+  const res = await fetch(`${API}/api/categories?category_type=${activeType}`);
+  const categories = await res.json();
   buildCategoryTabs(categories);
 }
 

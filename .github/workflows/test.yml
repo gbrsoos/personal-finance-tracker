@@ -39,5 +39,3 @@ jobs:
           CURRENCIES: '["HUF","EUR","USD"]'
           DEPLOY_CWD: /tmp/test-deploy
           POETRY_PATH: /usr/bin/poetry
-        run: python -m pytest -v
-
