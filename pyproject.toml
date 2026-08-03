@@ -1,6 +1,6 @@
 [project]
 name = "personal-finance-tracker"
-version = "0.3.0"
+version = "0.3.2"
 description = "Self-hosted personal finance tracker with PSD2 bank integration and AI categorization"
 authors = [
     {name = "Soós Gábor"}

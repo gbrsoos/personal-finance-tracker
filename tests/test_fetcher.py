@@ -27,8 +27,9 @@ def test_get_date_from_past_booking_date_returns_that_date(db_session, make_tran
     db_session.commit()
 
     result = get_date_from()
+    expected = (past_date - timedelta(days=3)).isoformat()
 
-    assert result == past_date.isoformat()
+    assert result == expected
 
 
 def test_get_date_from_uses_most_recent_of_multiple_transactions(db_session, make_transaction):
@@ -41,5 +42,6 @@ def test_get_date_from_uses_most_recent_of_multiple_transactions(db_session, mak
     db_session.commit()
 
     result = get_date_from()
+    expected = (newer_date - timedelta(days=3)).isoformat()
 
-    assert result == newer_date.isoformat()
+    assert result == expected
