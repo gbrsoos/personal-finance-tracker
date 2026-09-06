@@ -234,17 +234,18 @@ Add:
 
 ## Automatic deployment
 
-On the Raspberry Pi, `deploy_watcher.py` runs as a `systemd` service and polls the GitHub releases API every 10 minutes. When the latest release tag differs from the version in the deployed `pyproject.toml`, it automatically pulls the latest changes, reinstalls dependencies with Poetry, runs pending Alembic migrations, and restarts the scheduler and dashboard services — so shipping a new GitHub release is enough to deploy it, no manual SSH step required.
+On the Raspberry Pi, `deploy_watcher.py` runs as a `systemd` service and polls the GitHub releases API every 10 minutes. When the latest release tag differs from the version in the deployed `pyproject.toml`, it automatically pulls the latest changes, reinstalls dependencies with Poetry, runs pending Alembic migrations, seeds any newly added categories by running `storage.py`, and restarts the scheduler and dashboard services — so shipping a new GitHub release is enough to deploy it, no manual SSH step required.
 
 ---
 
 ## Updating an existing installation
 
-When a new version introduces schema changes, apply them without losing data:
+When a new version introduces schema changes or new categories, apply them without losing data:
 
 ```bash
 git pull
 alembic upgrade head
+python src/storage.py
 ```
 
 ---

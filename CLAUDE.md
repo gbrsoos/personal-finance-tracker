@@ -40,10 +40,11 @@ src/
 - **`sessions.json`** in `secrets/` stores Enable Banking OAuth sessions (one entry per bank).
 - **`BANKS`** dict in `config.py` (not `.env`) defines which banks to sync: `{"Bank Name": "COUNTRY_CODE"}`.
 - **SHA256 hash** of `(bank_name, account_uid, entry_reference)` is the transaction primary key — deduplication is idempotent.
+- **Categorization is two-tiered**: `processor.py`'s `identify_internal_transfer()` deterministically assigns "Currency Exchange" / "Internal Transfer" at ingestion time from transaction code and counterparty IBAN/BBAN against the caller's own tracked accounts (`get_own_account_identifiers()`); everything else falls through to the Claude AI categorization pipeline.
 - **`sqlite-vec`** extension must be loaded via SQLAlchemy event listener (see `storage.py`) before any vector queries.
 - **`render_as_batch=True`** is set in `migrations/env.py` — required for SQLite column alterations.
 - All **file paths** in `.env` must be absolute when running via Claude desktop MCP or cron.
-- **`deploy_watcher.py`** compares `pyproject.toml` version against latest GitHub release tag — deploys automatically when they differ.
+- **`deploy_watcher.py`** compares `pyproject.toml` version against latest GitHub release tag — deploys automatically when they differ, running Alembic migrations and `storage.py` (to seed any newly added categories) before restarting services.
 
 ## Database Schema
 
@@ -61,6 +62,10 @@ src/
 | value_date | DATE nullable | |
 | transa_details | VARCHAR | remittance_information list joined as string |
 | transaction_code | VARCHAR nullable | e.g. "CARD_PAYMENT", "TRANSFER" |
+| creditor_iban | VARCHAR nullable | Creditor account IBAN, when present |
+| creditor_bban | VARCHAR nullable | Creditor account BBAN, when present |
+| debtor_iban | VARCHAR nullable | Debtor account IBAN, when present |
+| debtor_bban | VARCHAR nullable | Debtor account BBAN, when present |
 | status | VARCHAR nullable | "BOOK" or "PDNG" |
 | category | VARCHAR nullable | Filled by categorization agent |
 | notes | VARCHAR nullable | Manual notes |
@@ -140,5 +145,5 @@ Notable vars:
 Spending:  Groceries, Clothes, Utilities, Subscriptions, Eating out, Transport, Sports, Irregular
 Income:    Salary, Ingenium, Other Income
 Savings:   Revolut Spare Change
-Transfer:  Currency Exchange
+Transfer:  Currency Exchange, Internal Transfer
 ```
