@@ -49,6 +49,11 @@ def deploy():
         env={"PYTHONPATH": "src", "PYTHON_KEYRING_BACKEND": "keyring.backends.null.Keyring"}
     )
     subprocess.run(
+        [settings.poetry_path, "run", "python", "src/storage.py"],
+        cwd=settings.deploy_cwd, check=True,
+        env={"PYTHONPATH": "src", "PYTHON_KEYRING_BACKEND": "keyring.backends.null.Keyring"}
+    )
+    subprocess.run(
         [settings.poetry_path, "run", "python", "src/scheduler.py"],
         cwd=settings.deploy_cwd, check=True,
         env={"PYTHONPATH": "src", "PYTHON_KEYRING_BACKEND": "keyring.backends.null.Keyring"}
