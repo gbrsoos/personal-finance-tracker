@@ -5,9 +5,10 @@ from mcp.server.fastmcp import FastMCP
 from categorization_agent import run_categorization as trigger_categorization
 from config import settings
 from embedder import add_example
-from queries import query_balances, query_income, query_spending, query_transactions_by_category, query_uncategorized_transactions
+from queries import (query_balances, query_spending,
+                     query_transactions_by_category,
+                     query_uncategorized_transactions)
 from storage import Transaction, get_session
-
 
 mcp = FastMCP("personal_finance_tracker")
 

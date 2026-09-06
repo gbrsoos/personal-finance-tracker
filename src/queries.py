@@ -3,7 +3,7 @@ from datetime import date
 from sqlalchemy import func
 from sqlalchemy.engine import Row
 
-from storage import Balance, Transaction, Category, get_session
+from storage import Balance, Category, Transaction, get_session
 
 
 def query_balances() -> list[Row]:

@@ -3,7 +3,6 @@ import os
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
 model_config = SettingsConfigDict(
     env_file=os.environ.get("ENV_FILE", ".env"),
     env_file_encoding="utf-8",

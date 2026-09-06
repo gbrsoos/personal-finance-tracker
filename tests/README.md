@@ -6,8 +6,8 @@ pytest
 
 ## Layout
 
-- `conftest.py` — fixtures shared across all tests: an in-memory SQLite database (`in_memory_engine`, `db_session`), ORM object factories (`make_transaction`, `make_balance`), and sample raw Enable Banking payloads (`raw_transaction_payload`, `raw_balance_payload`).
-- `test_processor.py` — `prepare_transaction()` / `prepare_balance()` field mapping and edge cases.
+- `conftest.py` — fixtures shared across all tests: an in-memory SQLite database (`in_memory_engine`, `db_session`), ORM object factories (`make_transaction`, `make_balance`), sample raw Enable Banking payloads (`raw_transaction_payload`, `raw_balance_payload`), and a sample set of own-account IBANs (`own_accounts`).
+- `test_processor.py` — `prepare_transaction()` / `prepare_balance()` field mapping and edge cases, internal-transfer/currency-exchange classification (`identify_internal_transfer()`), and own-account IBAN discovery (`get_own_account_identifiers()`).
 - `test_queries.py` — read-only query functions in `queries.py`.
 - `test_categorization.py` — `update_categories()` / `get_uncategorized_transactions()` in `categorization_agent.py`.
 - `test_fetcher.py` — `get_date_from()` in `fetcher.py`.

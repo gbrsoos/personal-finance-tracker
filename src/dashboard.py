@@ -2,7 +2,8 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from sqlalchemy.engine import Row
 
-from queries import query_balances, query_income, query_spending, query_transactions_by_category, query_categories
+from queries import (query_balances, query_categories, query_income,
+                     query_spending, query_transactions_by_category)
 
 app = FastAPI()
 

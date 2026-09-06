@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.4.0] - 2026.09.06
+
+### Added
+- Deterministic internal transfer / currency exchange categorization in `processor.py`: `identify_internal_transfer()` categorizes a transaction as "Currency Exchange" (EXCHANGE transaction code) or "Internal Transfer" (counterparty IBAN/BBAN matches one of your own tracked accounts) at ingestion time, ahead of the AI categorization pass; `get_own_account_identifiers()` collects those account IBANs from `sessions.json`
+- `creditor_iban`, `creditor_bban`, `debtor_iban`, `debtor_bban` columns on `transactions`, populated from the Enable Banking payload
+- New `Internal Transfer` category (type: transfer)
+
+### Fixed
+- Using isort within poetry to handle import sorting and formatting.
+
 ## [0.3.2] - 2026.08.03
 
 ### Fixed

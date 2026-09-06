@@ -111,6 +111,12 @@ def make_balance():
 
 
 @pytest.fixture
+def own_accounts() -> set[str]:
+    """Sample set of IBANs belonging to the user's own tracked accounts."""
+    return {"HU12117020161111101800000000", "HU34117020161111101800000001"}
+
+
+@pytest.fixture
 def raw_transaction_payload() -> dict:
     """Realistic Enable Banking transaction payload (Revolut format)."""
     return {
