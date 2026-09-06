@@ -5,6 +5,7 @@ from categorization_agent import run_categorization
 from config import BANKS
 from fetcher import fetch_balances, fetch_transactions, uid_detail_retriever
 from processor import process_balances, process_transactions
+
 logging.basicConfig(level=logging.INFO)
 
 logger = logging.getLogger(__name__)

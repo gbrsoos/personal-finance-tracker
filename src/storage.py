@@ -4,7 +4,8 @@ from decimal import Decimal
 from typing import Optional
 
 import sqlite_vec
-from sqlalchemy import Date, DateTime, LargeBinary, Numeric, PrimaryKeyConstraint, String, create_engine, event
+from sqlalchemy import (Date, DateTime, LargeBinary, Numeric,
+                        PrimaryKeyConstraint, String, create_engine, event)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 
 from config import settings
@@ -29,6 +30,10 @@ class Transaction(Base):
     # List in raw data, joined to string before storage e.g. ", ".join(remittance_information)
     remittance_information: Mapped[str] = mapped_column(String, name="transa_details")
     transaction_code: Mapped[str] = mapped_column(String, nullable=True)
+    creditor_iban: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    creditor_bban: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    debtor_iban: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    debtor_bban: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     status: Mapped[str] = mapped_column(String, nullable=True)
     category: Mapped[str] = mapped_column(String, nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(String, nullable=True)
@@ -94,6 +99,7 @@ def seed_categories():
         Category(category_name="Currency Exchange", category_type="transfer"),
         Category(category_name="Transport", category_type="spending"),
         Category(category_name="Sports", category_type="spending"),
+        Category(category_name="Internal Transfer", category_type="transfer")
     ]
     
     with get_session() as session:

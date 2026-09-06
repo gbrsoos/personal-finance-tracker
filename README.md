@@ -31,6 +31,7 @@ Enable Banking API (PSD2)
 
 - **PSD2 bank connection** via Enable Banking — supports 2,700+ European banks
 - **Automatic categorization** using Claude AI with vector similarity search
+- **Deterministic internal transfer detection** — transfers between your own tracked accounts and currency exchanges are recognized from IBAN/BBAN and transaction code, bypassing the AI categorizer entirely
 - **Learning from corrections** — recategorize once, remember forever
 - **Natural language interface** via Claude desktop MCP integration
 - **Read-only web dashboard** with spending/income donut charts and a transaction list showing category per transaction
@@ -292,7 +293,7 @@ Default categories (configurable in `src/storage.py`):
 | Spending | Groceries, Clothes, Utilities, Subscriptions, Eating out, Transport, Sports, Irregular |
 | Income | Salary, Ingenium, Other Income |
 | Savings | Revolut Spare Change |
-| Transfer | Currency Exchange |
+| Transfer | Currency Exchange, Internal Transfer |
 
 ---
 
