@@ -107,6 +107,9 @@ def prepare_transaction(transaction: dict, bank_name: str, account_uid: str, own
         own_accounts=own_accounts,
     )
 
+    # Checking if the transaction's transaction_code is TOPUP and populating the boolean accordingly
+    is_topup: bool = transaction_code == "TOPUP"
+
     output = Transaction(
         id=unique_id,
         bank_name=bank_name,
@@ -124,6 +127,7 @@ def prepare_transaction(transaction: dict, bank_name: str, account_uid: str, own
         debtor_iban=debtor_iban,
         debtor_bban=debtor_bban,
         status=status,
+        is_topup=is_topup,
         category=category,
         ingested_at=ingested_at,
     )

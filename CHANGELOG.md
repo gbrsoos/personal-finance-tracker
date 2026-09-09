@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.4.2] - 2026.09.09
+
+### Added
+- `is_topup` column on `transactions`, set by `prepare_transaction()` when `transaction_code` is "TOPUP"
+- `query_spending()`, `query_income()`, and `query_transactions_by_category()` now filter out `is_topup` transactions, so card/account top-ups no longer inflate spending, income, or category totals
+
 ## [0.4.1] - 2026.09.06
 
 ### Fixed

@@ -35,6 +35,7 @@ Enable Banking API (PSD2)
 - **Learning from corrections** — recategorize once, remember forever
 - **Natural language interface** via Claude desktop MCP integration
 - **Read-only web dashboard** with spending/income donut charts and a transaction list showing category per transaction
+- **Top-up exclusion** — card/account top-up transactions are flagged and left out of spending, income, and per-category totals so they don't skew your numbers
 - **Multi-bank, multi-currency** support
 - **Incremental sync** — only fetches new transactions on each run
 

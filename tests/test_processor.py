@@ -30,6 +30,7 @@ def test_prepare_transaction_field_mapping(raw_transaction_payload):
     assert tr.remittance_information == "lidl_budapest,_card_payment"
     assert tr.transaction_code == "PMNT"
     assert tr.status == "BOOK"
+    assert tr.is_topup is False
     assert tr.category is None
     assert tr.creditor_iban is None
     assert tr.creditor_bban is None
@@ -128,6 +129,23 @@ def test_prepare_transaction_leaves_category_none_when_no_match(raw_transaction_
     tr = prepare_transaction(raw_transaction_payload, BANK_NAME, ACCOUNT_UID, own_accounts=own_accounts)
 
     assert tr.category is None
+
+
+def test_prepare_transaction_marks_is_topup_for_topup_code(raw_transaction_payload):
+    raw_transaction_payload["bank_transaction_code"] = {"code": "TOPUP"}
+
+    tr = prepare_transaction(raw_transaction_payload, BANK_NAME, ACCOUNT_UID, own_accounts=NO_OWN_ACCOUNTS)
+
+    assert tr.is_topup is True
+    assert tr.category is None
+
+
+def test_prepare_transaction_is_topup_false_for_non_topup_code(raw_transaction_payload):
+    raw_transaction_payload["bank_transaction_code"] = {"code": "CARD_PAYMENT"}
+
+    tr = prepare_transaction(raw_transaction_payload, BANK_NAME, ACCOUNT_UID, own_accounts=NO_OWN_ACCOUNTS)
+
+    assert tr.is_topup is False
 
 
 def test_prepare_balance_field_mapping(raw_balance_payload):
