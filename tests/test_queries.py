@@ -83,6 +83,30 @@ def test_query_spending_filters_by_date_range_and_indicator(db_session, make_tra
     assert results[0][2] == Decimal("50.00")
 
 
+def test_query_spending_excludes_topup_transactions(db_session, make_transaction):
+    regular = make_transaction(
+        category="Groceries",
+        credit_debit_indicator="DBIT",
+        booking_date=date(2026, 1, 10),
+        amount=Decimal("50.00"),
+        is_topup=False,
+    )
+    topup = make_transaction(
+        category="Groceries",
+        credit_debit_indicator="DBIT",
+        booking_date=date(2026, 1, 11),
+        amount=Decimal("100.00"),
+        is_topup=True,
+    )
+    db_session.add_all([regular, topup])
+    db_session.commit()
+
+    results = query_spending("2026-01-01", "2026-01-31")
+
+    assert len(results) == 1
+    assert results[0][2] == Decimal("50.00")
+
+
 def test_query_income_filters_for_credit_transactions(db_session, make_transaction):
     salary = make_transaction(
         category="Salary",
@@ -112,6 +136,30 @@ def test_query_income_filters_for_credit_transactions(db_session, make_transacti
     assert results[0][2] == Decimal("1500.00")
 
 
+def test_query_income_excludes_topup_transactions(db_session, make_transaction):
+    regular = make_transaction(
+        category="Salary",
+        credit_debit_indicator="CRDT",
+        booking_date=date(2026, 1, 5),
+        amount=Decimal("1500.00"),
+        is_topup=False,
+    )
+    topup = make_transaction(
+        category="Salary",
+        credit_debit_indicator="CRDT",
+        booking_date=date(2026, 1, 6),
+        amount=Decimal("2000.00"),
+        is_topup=True,
+    )
+    db_session.add_all([regular, topup])
+    db_session.commit()
+
+    results = query_income("2026-01-01", "2026-01-31")
+
+    assert len(results) == 1
+    assert results[0][2] == Decimal("1500.00")
+
+
 def test_query_transactions_by_category_returns_matching_rows(db_session, make_transaction):
     match = make_transaction(
         category="Eating out",
@@ -138,6 +186,28 @@ def test_query_transactions_by_category_returns_matching_rows(db_session, make_t
     assert results[0].id == match.id
     assert results[0].remittance_information == "pizza_place"
     assert results[0].amount == Decimal("15.00")
+
+
+def test_query_transactions_by_category_excludes_topup_transactions(db_session, make_transaction):
+    regular = make_transaction(
+        category="Eating out",
+        booking_date=date(2026, 2, 10),
+        amount=Decimal("15.00"),
+        is_topup=False,
+    )
+    topup = make_transaction(
+        category="Eating out",
+        booking_date=date(2026, 2, 11),
+        amount=Decimal("30.00"),
+        is_topup=True,
+    )
+    db_session.add_all([regular, topup])
+    db_session.commit()
+
+    results = query_transactions_by_category("Eating out", "2026-02-01", "2026-02-28")
+
+    assert len(results) == 1
+    assert results[0].id == regular.id
 
 
 def test_query_uncategorized_transactions_returns_only_null_category(db_session, make_transaction):

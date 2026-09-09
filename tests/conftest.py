@@ -77,6 +77,7 @@ def make_transaction():
             remittance_information="lidl_budapest",
             transaction_code="PMNT",
             status="BOOK",
+            is_topup=False,
             category=None,
             notes=None,
             ingested_at=datetime.now(timezone.utc),

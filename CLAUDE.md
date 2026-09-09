@@ -41,6 +41,7 @@ src/
 - **`BANKS`** dict in `config.py` (not `.env`) defines which banks to sync: `{"Bank Name": "COUNTRY_CODE"}`.
 - **SHA256 hash** of `(bank_name, account_uid, entry_reference)` is the transaction primary key — deduplication is idempotent.
 - **Categorization is two-tiered**: `processor.py`'s `identify_internal_transfer()` deterministically assigns "Currency Exchange" / "Internal Transfer" at ingestion time from transaction code and counterparty IBAN/BBAN against the caller's own tracked accounts (`get_own_account_identifiers()`); everything else falls through to the Claude AI categorization pipeline.
+- **`is_topup`** is set on every transaction in `prepare_transaction()` (True when `transaction_code == "TOPUP"`) and filtered out (`is_topup == False`) by `query_spending()`, `query_income()`, and `query_transactions_by_category()` in `queries.py` — top-ups never appear in spending/income totals or category breakdowns.
 - **`sqlite-vec`** extension must be loaded via SQLAlchemy event listener (see `storage.py`) before any vector queries.
 - **`render_as_batch=True`** is set in `migrations/env.py` — required for SQLite column alterations.
 - All **file paths** in `.env` must be absolute when running via Claude desktop MCP or cron.
@@ -67,6 +68,7 @@ src/
 | debtor_iban | VARCHAR nullable | Debtor account IBAN, when present |
 | debtor_bban | VARCHAR nullable | Debtor account BBAN, when present |
 | status | VARCHAR nullable | "BOOK" or "PDNG" |
+| is_topup | BOOLEAN NOT NULL, default 0 | True when transaction_code is "TOPUP"; excluded from spending/income/category queries |
 | category | VARCHAR nullable | Filled by categorization agent |
 | notes | VARCHAR nullable | Manual notes |
 | ingested_at | DATETIME | UTC |

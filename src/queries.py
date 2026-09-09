@@ -33,6 +33,7 @@ def query_spending(date_from: str, date_to: str, categories=None) -> list[Row]:
         ).filter(Transaction.credit_debit_indicator == "DBIT"
         ).filter(Transaction.booking_date >= date_from_parsed
         ).filter(Transaction.booking_date <= date_to_parsed
+        ).filter(Transaction.is_topup == False
         ).group_by(Transaction.category, Transaction.currency)
 
         if categories:
@@ -53,6 +54,7 @@ def query_income(date_from: str, date_to: str, categories=None) -> list[Row]:
         ).filter(Transaction.credit_debit_indicator == "CRDT"
         ).filter(Transaction.booking_date >= date_from_parsed
         ).filter(Transaction.booking_date <= date_to_parsed
+        ).filter(Transaction.is_topup == False
         ).group_by(Transaction.category, Transaction.currency)
 
         if categories:
@@ -75,6 +77,7 @@ def query_transactions_by_category(category: str, date_from: str, date_to: str) 
             Transaction.category
         ).filter(Transaction.booking_date >= date_from_parsed
         ).filter(Transaction.booking_date <= date_to_parsed
+        ).filter(Transaction.is_topup == False
         ).filter(Transaction.category == category).all()
 
         return category_transactions

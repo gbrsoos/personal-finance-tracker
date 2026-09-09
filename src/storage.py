@@ -4,7 +4,7 @@ from decimal import Decimal
 from typing import Optional
 
 import sqlite_vec
-from sqlalchemy import (Date, DateTime, LargeBinary, Numeric,
+from sqlalchemy import (Boolean, Date, DateTime, LargeBinary, Numeric,
                         PrimaryKeyConstraint, String, create_engine, event)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 
@@ -35,6 +35,7 @@ class Transaction(Base):
     debtor_iban: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     debtor_bban: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     status: Mapped[str] = mapped_column(String, nullable=True)
+    is_topup: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="0")
     category: Mapped[str] = mapped_column(String, nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     ingested_at: Mapped[datetime] = mapped_column(DateTime)
