@@ -36,6 +36,7 @@ Enable Banking API (PSD2)
 - **Natural language interface** via Claude desktop MCP integration
 - **Read-only web dashboard** with spending/income donut charts and a transaction list showing category per transaction
 - **Top-up exclusion** — card/account top-up transactions are flagged and left out of spending, income, and per-category totals so they don't skew your numbers
+- **Type-safe totals** — spending and income queries only include transactions whose category is actually typed as `spending`/`income`, so Currency Exchange and Internal Transfer entries never leak into (and inflate) your totals
 - **Multi-bank, multi-currency** support
 - **Incremental sync** — only fetches new transactions on each run
 
