@@ -43,6 +43,7 @@ src/
 - **Categorization is two-tiered**: `processor.py`'s `identify_internal_transfer()` deterministically assigns "Currency Exchange" / "Internal Transfer" at ingestion time from transaction code and counterparty IBAN/BBAN against the caller's own tracked accounts (`get_own_account_identifiers()`); everything else falls through to the Claude AI categorization pipeline.
 - **`is_topup`** is set on every transaction in `prepare_transaction()` (True when `transaction_code == "TOPUP"`) and filtered out (`is_topup == False`) by `query_spending()`, `query_income()`, and `query_transactions_by_category()` in `queries.py` — top-ups never appear in spending/income totals or category breakdowns.
 - **`query_spending()`** and **`query_income()`** in `queries.py` join `Transaction.category` against `Category.category_name` and filter on `Category.category_type == "spending"` / `"income"` respectively — this keeps Transfer-type categories (`Currency Exchange`, `Internal Transfer`) from leaking into spending/income totals just because they happen to be a debit/credit. Any transaction whose category isn't seeded in `categories` (or is `NULL`) is excluded by the join.
+- **Pending transactions are excluded from totals.** Banks report the same transaction first as `PDNG` and later as `BOOK` with a different `entry_reference`, so both rows are stored (different hash PKs). `query_spending()`, `query_income()`, and `query_transactions_by_category()` filter with `Transaction.status.is_distinct_from("PDNG")` to avoid double counting. Use `is_distinct_from` rather than `!= "PDNG"` — `status` is nullable, and SQL's `NULL != 'PDNG'` is NULL, which would silently drop rows with no status.
 - **`sqlite-vec`** extension must be loaded via SQLAlchemy event listener (see `storage.py`) before any vector queries.
 - **`render_as_batch=True`** is set in `migrations/env.py` — required for SQLite column alterations.
 - All **file paths** in `.env` must be absolute when running via Claude desktop MCP or cron.
@@ -68,7 +69,7 @@ src/
 | creditor_bban | VARCHAR nullable | Creditor account BBAN, when present |
 | debtor_iban | VARCHAR nullable | Debtor account IBAN, when present |
 | debtor_bban | VARCHAR nullable | Debtor account BBAN, when present |
-| status | VARCHAR nullable | "BOOK" or "PDNG" |
+| status | VARCHAR nullable | "BOOK" or "PDNG"; PDNG rows are excluded from spending/income/category queries |
 | is_topup | BOOLEAN NOT NULL, default 0 | True when transaction_code is "TOPUP"; excluded from spending/income/category queries |
 | category | VARCHAR nullable | Filled by categorization agent |
 | notes | VARCHAR nullable | Manual notes |

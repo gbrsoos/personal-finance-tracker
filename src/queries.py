@@ -36,6 +36,7 @@ def query_spending(date_from: str, date_to: str, categories=None) -> list[Row]:
         ).filter(Transaction.booking_date <= date_to_parsed
         ).filter(Transaction.is_topup == False
         ).filter(Category.category_type == "spending"
+        ).filter(Transaction.status.is_distinct_from("PDNG")
         ).group_by(Transaction.category, Transaction.currency)
 
         if categories:
@@ -59,6 +60,7 @@ def query_income(date_from: str, date_to: str, categories=None) -> list[Row]:
         ).filter(Transaction.booking_date <= date_to_parsed
         ).filter(Transaction.is_topup == False
         ).filter(Category.category_type == "income"
+        ).filter(Transaction.status.is_distinct_from("PDNG")
         ).group_by(Transaction.category, Transaction.currency)
 
         if categories:
@@ -82,6 +84,7 @@ def query_transactions_by_category(category: str, date_from: str, date_to: str) 
         ).filter(Transaction.booking_date >= date_from_parsed
         ).filter(Transaction.booking_date <= date_to_parsed
         ).filter(Transaction.is_topup == False
+        ).filter(Transaction.status.is_distinct_from("PDNG")
         ).filter(Transaction.category == category).all()
 
         return category_transactions

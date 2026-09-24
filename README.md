@@ -37,6 +37,7 @@ Enable Banking API (PSD2)
 - **Read-only web dashboard** with spending/income donut charts and a transaction list showing category per transaction
 - **Top-up exclusion** — card/account top-up transactions are flagged and left out of spending, income, and per-category totals so they don't skew your numbers
 - **Type-safe totals** — spending and income queries only include transactions whose category is actually typed as `spending`/`income`, so Currency Exchange and Internal Transfer entries never leak into (and inflate) your totals
+- **No pending/booked double counting** — banks report a transaction first as pending (`PDNG`) and later as booked (`BOOK`), and both end up stored; spending, income, and per-category queries ignore `PDNG` rows so each transaction is only counted once
 - **Multi-bank, multi-currency** support
 - **Incremental sync** — only fetches new transactions on each run
 
