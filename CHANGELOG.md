@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.4.4] - 2026.09.24
+
+### Fixed
+- Pending (`PDNG`) transactions are no longer double counted alongside their booked (`BOOK`) counterparts: `query_spending()`, `query_income()`, and `query_transactions_by_category()` in `queries.py` now exclude rows with `status == "PDNG"`. Rows with a `NULL` status are still included (the filter uses `IS NOT` / `is_distinct_from`)
+
 ## [0.4.3] - 2026.09.24
 
 ### Fixed

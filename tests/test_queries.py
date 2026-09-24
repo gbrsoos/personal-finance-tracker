@@ -153,6 +153,42 @@ def test_query_spending_excludes_transfer_category_transactions(db_session, make
     assert results[0].category == "Groceries"
     assert results[0][2] == Decimal("50.00")
 
+def test_query_spending_excludes_pending_transactions(db_session, make_transaction, make_category):
+    booked = make_transaction(
+        category="Groceries",
+        credit_debit_indicator="DBIT",
+        booking_date=date(2026, 1, 10),
+        amount=Decimal("50.00"),
+        status="BOOK",
+    )
+    pending_duplicate = make_transaction(
+        category="Groceries",
+        credit_debit_indicator="DBIT",
+        booking_date=date(2026, 1, 10),
+        amount=Decimal("50.00"),
+        status="PDNG",
+    )
+    no_status = make_transaction(
+        category="Groceries",
+        credit_debit_indicator="DBIT",
+        booking_date=date(2026, 1, 11),
+        amount=Decimal("20.00"),
+        status=None,
+    )
+    db_session.add_all([
+        make_category(category_name="Groceries", category_type="spending"),
+        booked,
+        pending_duplicate,
+        no_status,
+    ])
+    db_session.commit()
+
+    results = query_spending("2026-01-01", "2026-01-31")
+
+    assert len(results) == 1
+    assert results[0][2] == Decimal("70.00")
+
+
 
 def test_query_income_filters_for_credit_transactions(db_session, make_transaction, make_category):
     salary = make_transaction(
@@ -252,6 +288,42 @@ def test_query_income_excludes_transfer_category_transactions(db_session, make_t
     assert results[0].category == "Salary"
     assert results[0][2] == Decimal("1500.00")
 
+def test_query_income_excludes_pending_transactions(db_session, make_transaction, make_category):
+    booked = make_transaction(
+        category="Salary",
+        credit_debit_indicator="CRDT",
+        booking_date=date(2026, 1, 5),
+        amount=Decimal("1500.00"),
+        status="BOOK",
+    )
+    pending_duplicate = make_transaction(
+        category="Salary",
+        credit_debit_indicator="CRDT",
+        booking_date=date(2026, 1, 5),
+        amount=Decimal("1500.00"),
+        status="PDNG",
+    )
+    no_status = make_transaction(
+        category="Salary",
+        credit_debit_indicator="CRDT",
+        booking_date=date(2026, 1, 6),
+        amount=Decimal("100.00"),
+        status=None,
+    )
+    db_session.add_all([
+        make_category(category_name="Salary", category_type="income"),
+        booked,
+        pending_duplicate,
+        no_status,
+    ])
+    db_session.commit()
+
+    results = query_income("2026-01-01", "2026-01-31")
+
+    assert len(results) == 1
+    assert results[0][2] == Decimal("1600.00")
+
+
 
 def test_query_transactions_by_category_returns_matching_rows(db_session, make_transaction):
     match = make_transaction(
@@ -301,6 +373,33 @@ def test_query_transactions_by_category_excludes_topup_transactions(db_session, 
 
     assert len(results) == 1
     assert results[0].id == regular.id
+
+def test_query_transactions_by_category_excludes_pending_transactions(db_session, make_transaction):
+    booked = make_transaction(
+        category="Eating out",
+        booking_date=date(2026, 2, 10),
+        amount=Decimal("15.00"),
+        status="BOOK",
+    )
+    pending_duplicate = make_transaction(
+        category="Eating out",
+        booking_date=date(2026, 2, 10),
+        amount=Decimal("15.00"),
+        status="PDNG",
+    )
+    no_status = make_transaction(
+        category="Eating out",
+        booking_date=date(2026, 2, 11),
+        amount=Decimal("8.00"),
+        status=None,
+    )
+    db_session.add_all([booked, pending_duplicate, no_status])
+    db_session.commit()
+
+    results = query_transactions_by_category("Eating out", "2026-02-01", "2026-02-28")
+
+    assert {row.id for row in results} == {booked.id, no_status.id}
+
 
 
 def test_query_uncategorized_transactions_returns_only_null_category(db_session, make_transaction):
