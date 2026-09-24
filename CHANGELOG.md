@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.4.3] - 2026.09.24
+
+### Fixed
+- `query_spending()` and `query_income()` in `queries.py` now join `Transaction.category` against `Category.category_name` and filter on `Category.category_type`, so Transfer-type categories (`Currency Exchange`, `Internal Transfer`) no longer leak into spending/income totals just because they're a debit/credit
+
 ## [0.4.2] - 2026.09.09
 
 ### Added

@@ -9,6 +9,7 @@ from queries import (
     query_uncategorized_transactions,
     query_categories,
 )
+from storage import Category
 
 
 def test_query_balances_returns_only_latest_per_account(db_session, make_balance):
@@ -54,7 +55,7 @@ def test_query_balances_groups_separately_per_account(db_session, make_balance):
     assert {row.amount for row in results} == {Decimal("100.00"), Decimal("200.00")}
 
 
-def test_query_spending_filters_by_date_range_and_indicator(db_session, make_transaction):
+def test_query_spending_filters_by_date_range_and_indicator(db_session, make_transaction, make_category):
     in_range_debit = make_transaction(
         category="Groceries",
         credit_debit_indicator="DBIT",
@@ -73,7 +74,13 @@ def test_query_spending_filters_by_date_range_and_indicator(db_session, make_tra
         booking_date=date(2025, 12, 1),
         amount=Decimal("20.00"),
     )
-    db_session.add_all([in_range_debit, in_range_credit, out_of_range_debit])
+    db_session.add_all([
+        make_category(category_name="Groceries", category_type="spending"),
+        make_category(category_name="Salary", category_type="income"),
+        in_range_debit,
+        in_range_credit,
+        out_of_range_debit,
+    ])
     db_session.commit()
 
     results = query_spending("2026-01-01", "2026-01-31")
@@ -83,7 +90,7 @@ def test_query_spending_filters_by_date_range_and_indicator(db_session, make_tra
     assert results[0][2] == Decimal("50.00")
 
 
-def test_query_spending_excludes_topup_transactions(db_session, make_transaction):
+def test_query_spending_excludes_topup_transactions(db_session, make_transaction, make_category):
     regular = make_transaction(
         category="Groceries",
         credit_debit_indicator="DBIT",
@@ -98,7 +105,11 @@ def test_query_spending_excludes_topup_transactions(db_session, make_transaction
         amount=Decimal("100.00"),
         is_topup=True,
     )
-    db_session.add_all([regular, topup])
+    db_session.add_all([
+        make_category(category_name="Groceries", category_type="spending"),
+        regular,
+        topup,
+    ])
     db_session.commit()
 
     results = query_spending("2026-01-01", "2026-01-31")
@@ -107,7 +118,43 @@ def test_query_spending_excludes_topup_transactions(db_session, make_transaction
     assert results[0][2] == Decimal("50.00")
 
 
-def test_query_income_filters_for_credit_transactions(db_session, make_transaction):
+def test_query_spending_excludes_transfer_category_transactions(db_session, make_transaction, make_category):
+    spending = make_transaction(
+        category="Groceries",
+        credit_debit_indicator="DBIT",
+        booking_date=date(2026, 1, 10),
+        amount=Decimal("50.00"),
+    )
+    currency_exchange = make_transaction(
+        category="Currency Exchange",
+        credit_debit_indicator="DBIT",
+        booking_date=date(2026, 1, 11),
+        amount=Decimal("300.00"),
+    )
+    internal_transfer = make_transaction(
+        category="Internal Transfer",
+        credit_debit_indicator="DBIT",
+        booking_date=date(2026, 1, 12),
+        amount=Decimal("400.00"),
+    )
+    db_session.add_all([
+        make_category(category_name="Groceries", category_type="spending"),
+        make_category(category_name="Currency Exchange", category_type="transfer"),
+        make_category(category_name="Internal Transfer", category_type="transfer"),
+        spending,
+        currency_exchange,
+        internal_transfer,
+    ])
+    db_session.commit()
+
+    results = query_spending("2026-01-01", "2026-01-31")
+
+    assert len(results) == 1
+    assert results[0].category == "Groceries"
+    assert results[0][2] == Decimal("50.00")
+
+
+def test_query_income_filters_for_credit_transactions(db_session, make_transaction, make_category):
     salary = make_transaction(
         category="Salary",
         credit_debit_indicator="CRDT",
@@ -126,7 +173,13 @@ def test_query_income_filters_for_credit_transactions(db_session, make_transacti
         booking_date=date(2025, 11, 5),
         amount=Decimal("1400.00"),
     )
-    db_session.add_all([salary, groceries, old_salary])
+    db_session.add_all([
+        make_category(category_name="Salary", category_type="income"),
+        make_category(category_name="Groceries", category_type="spending"),
+        salary,
+        groceries,
+        old_salary,
+    ])
     db_session.commit()
 
     results = query_income("2026-01-01", "2026-01-31")
@@ -136,7 +189,7 @@ def test_query_income_filters_for_credit_transactions(db_session, make_transacti
     assert results[0][2] == Decimal("1500.00")
 
 
-def test_query_income_excludes_topup_transactions(db_session, make_transaction):
+def test_query_income_excludes_topup_transactions(db_session, make_transaction, make_category):
     regular = make_transaction(
         category="Salary",
         credit_debit_indicator="CRDT",
@@ -151,12 +204,52 @@ def test_query_income_excludes_topup_transactions(db_session, make_transaction):
         amount=Decimal("2000.00"),
         is_topup=True,
     )
-    db_session.add_all([regular, topup])
+    db_session.add_all([
+        make_category(category_name="Salary", category_type="income"),
+        regular,
+        topup,
+    ])
     db_session.commit()
 
     results = query_income("2026-01-01", "2026-01-31")
 
     assert len(results) == 1
+    assert results[0][2] == Decimal("1500.00")
+
+
+def test_query_income_excludes_transfer_category_transactions(db_session, make_transaction, make_category):
+    salary = make_transaction(
+        category="Salary",
+        credit_debit_indicator="CRDT",
+        booking_date=date(2026, 1, 5),
+        amount=Decimal("1500.00"),
+    )
+    currency_exchange = make_transaction(
+        category="Currency Exchange",
+        credit_debit_indicator="CRDT",
+        booking_date=date(2026, 1, 6),
+        amount=Decimal("300.00"),
+    )
+    internal_transfer = make_transaction(
+        category="Internal Transfer",
+        credit_debit_indicator="CRDT",
+        booking_date=date(2026, 1, 7),
+        amount=Decimal("400.00"),
+    )
+    db_session.add_all([
+        make_category(category_name="Salary", category_type="income"),
+        make_category(category_name="Currency Exchange", category_type="transfer"),
+        make_category(category_name="Internal Transfer", category_type="transfer"),
+        salary,
+        currency_exchange,
+        internal_transfer,
+    ])
+    db_session.commit()
+
+    results = query_income("2026-01-01", "2026-01-31")
+
+    assert len(results) == 1
+    assert results[0].category == "Salary"
     assert results[0][2] == Decimal("1500.00")
 
 
@@ -223,7 +316,6 @@ def test_query_uncategorized_transactions_returns_only_null_category(db_session,
 
 
 def test_query_categories_filters_by_type(db_session):
-    from storage import Category
     db_session.add_all([
         Category(category_name="Groceries", category_type="spending"),
         Category(category_name="Salary", category_type="income"),

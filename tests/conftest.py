@@ -24,7 +24,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 import storage
-from storage import Balance, Base, Transaction
+from storage import Balance, Base, Category, Transaction
 
 
 @pytest.fixture
@@ -107,6 +107,18 @@ def make_balance():
         )
         defaults.update(overrides)
         return Balance(**defaults)
+
+    return _make
+
+
+@pytest.fixture
+def make_category():
+    """Factory for building Category ORM objects with sane defaults."""
+
+    def _make(**overrides) -> Category:
+        defaults = dict(category_name="Groceries", category_type="spending")
+        defaults.update(overrides)
+        return Category(**defaults)
 
     return _make
 
